@@ -30,6 +30,7 @@ public class Robot extends IterativeRobot {
     Joystick baseDriverJoystick,coDriverJoystick;
     
     
+    
 	
     /**
      * This function is run when the robot is first started up and should be
@@ -39,7 +40,7 @@ public class Robot extends IterativeRobot {
         chooser = new SendableChooser();
         chooser.addDefault("Default Auto", defaultAuto);
         chooser.addObject("My Auto", customAuto);
-        SmartDashboard.putData("Auto choices", chooser);
+        SmartDashboard.putData("AutoChoices", chooser);
         
         v1 = new Victor(0);
         v2 = new Victor(1);
@@ -50,6 +51,8 @@ public class Robot extends IterativeRobot {
         
         baseDriverJoystick = new Joystick(0);
         coDriverJoystick = new Joystick(1);
+        
+        
 
         
         
