@@ -10,6 +10,8 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.Victor;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.Solenoid;
+import edu.wpi.first.wpilibj.DigitalInput;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -19,8 +21,8 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
  * directory.
  */
 public class Robot extends IterativeRobot {
-    final String defaultAuto = "Default";
-    final String customAuto = "My Auto";
+    final String defaultAuto = "Do nothing";
+    final String customAuto = "Drive foward";
     String autoSelected;
     SendableChooser chooser;
     Compressor c1, c2;
@@ -28,6 +30,7 @@ public class Robot extends IterativeRobot {
     Encoder e1,e2;
     RobotDrive officialRobot;
     Joystick baseDriverJoystick,coDriverJoystick;
+    DigitalInput gearDetectionLimitSwitch;
     
     
     
@@ -38,8 +41,8 @@ public class Robot extends IterativeRobot {
      */
     public void robotInit() {
         chooser = new SendableChooser();
-        chooser.addDefault("Default Auto", defaultAuto);
-        chooser.addObject("My Auto", customAuto);
+        chooser.addDefault("Auto_nothing", defaultAuto);
+        chooser.addObject("Auto_custom", customAuto);
         SmartDashboard.putData("AutoChoices", chooser);
         
         v1 = new Victor(0);
@@ -51,11 +54,6 @@ public class Robot extends IterativeRobot {
         
         baseDriverJoystick = new Joystick(0);
         coDriverJoystick = new Joystick(1);
-        
-        
-
-        
-        
     }
     
 	/**
