@@ -39,15 +39,15 @@ public class Robot extends IterativeRobot {
     SendableChooser driveChooser;
     
     //compressors
-    Compressor c1, c2;
-    //motor controllers
+    Compressor compressor1, compressor2;
+    //motor controllers, named based on port number
     Victor leftDrive0,leftDrive1,rightDrive2,rightDrive3;
     //encoders
-    Encoder e1,e2;
+    Encoder encoder1,encoder2;
     
     //drive function
     RobotDrive drivetrain;
-    //controllers: driver: driving, operator: functions
+    //controllers: driver: driving, operator: functions (like intake and shooter)
     XboxController driverController,operatorController;
     //gear detection?
     DigitalInput gearDetectionLimitSwitch;
@@ -62,13 +62,13 @@ public class Robot extends IterativeRobot {
         autoChooser = new SendableChooser();
         autoChooser.addDefault("Auto_nothing", defaultAuto);
         autoChooser.addObject("Auto_custom", customAuto);
-        SmartDashboard.putData("AutoChoices", chooser);
+        SmartDashboard.putData("AutoChoices", autoChooser);
 
     	//Assign chooser for Teleop drive mode
-        teleopChooser = new SendableChooser();
-        teleopChooser.addDefault("Tank Drive", defaultAuto);
-        teleopChooser.addObject("Arcade Drive", customAuto);
-        SmartDashboard.putData("AutoChoices", chooser);
+        driveChooser = new SendableChooser();
+        driveChooser.addDefault("Tank Drive", defaultDrive); //we need to see how these work
+        driveChooser.addObject("Arcade Drive", arcadeDrive);
+        SmartDashboard.putData("Drive Choices", driveChooser);
         
         //Assign motor controllers
         leftDrive0 = new Victor(0);
@@ -117,7 +117,7 @@ public class Robot extends IterativeRobot {
     
     public void teleopInit() {
     	//teleop init
-    	//get drive mode selection
+    	//get drive mode selection (tank, arcade, GTA?)
     	driveMode = (String) driveChooser.getSelected();
     	//print drive mode selection
     	System.out.println("Drive mode selected: " + driveMode);
