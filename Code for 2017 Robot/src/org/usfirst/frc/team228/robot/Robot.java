@@ -5,6 +5,7 @@ import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.RobotDrive;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.Victor;
@@ -21,15 +22,28 @@ import edu.wpi.first.wpilibj.DigitalInput;
  * directory.
  */
 public class Robot extends IterativeRobot {
+	//Pre-Init
     final String defaultAuto = "Do nothing";
     final String customAuto = "Drive foward";
+    //autonomous selection
     String autoSelected;
-    SendableChooser chooser;
+    //autonomous selector
+    SendableChooser autoChooser;
+    //drive mode selection
+    String driveSelected;
+    //drive mode selector
+    SendableChooser driveChooser;
+    //compressors
     Compressor c1, c2;
+    //motor controllers
     Victor v1,v2,v3,v4;
+    //encoders
     Encoder e1,e2;
+    //drive function
     RobotDrive officialRobot;
-    Joystick baseDriverJoystick,coDriverJoystick;
+    //controllers: driver: driving, operator: functions
+    XboxController driverController,operatorController;
+    //gear detection?
     DigitalInput gearDetectionLimitSwitch;
     
     
@@ -40,20 +54,24 @@ public class Robot extends IterativeRobot {
      * used for any initialization code.
      */
     public void robotInit() {
+    	//Assign chooser for Autonomous programs
         chooser = new SendableChooser();
         chooser.addDefault("Auto_nothing", defaultAuto);
         chooser.addObject("Auto_custom", customAuto);
         SmartDashboard.putData("AutoChoices", chooser);
         
-        v1 = new Victor(0);
-        v2 = new Victor(1);
-        v3 = new Victor(2);
-        v4 = new Victor(3);
+        //Assign motor controllers
+        leftDrive1 = new Victor(0);
+        leftDrive2 = new Victor(1);
+        rightDrive1 = new Victor(2);
+        rightDrive2 = new Victor(3);
         
-        officialRobot = new RobotDrive(v1, v2, v3, v4);
+        //Assign Robot Drive
+        drivetrain = new RobotDrive(v1, v2, v3, v4);
         
-        baseDriverJoystick = new Joystick(0);
-        coDriverJoystick = new Joystick(1);
+        //Assign XboxControllers
+        driverController = new XboxController(0);
+        operatorController = new XboxController(1);
     }
     
 	/**
@@ -66,9 +84,10 @@ public class Robot extends IterativeRobot {
 	 * If using the SendableChooser make sure to add them to the chooser code above as well.
 	 */
     public void autonomousInit() {
-    	autoSelected = (String) chooser.getSelected();
-//		autoSelected = SmartDashboard.getString("Auto Selector", defaultAuto);
-		System.out.println("Auto selected: " + autoSelected);
+    	//get Autonomous selection
+    	autoSelected = (String) autoChooser.getSelected();
+		//print autonomous selection
+    	System.out.println("Auto selected: " + autoSelected);
     }
 
     /**
@@ -85,12 +104,23 @@ public class Robot extends IterativeRobot {
             break;
     	}
     }
+    
+    public void teleopInit() {
+    	//teleop init
+    	//get selection
+    	driveSelected = (String) driveChooser.getSelected();
+    	//print selection
+    	System.out.println("Drive mode selected: " + driveSelected);
+    }
 
     /**
      * This function is called periodically during operator control
      */
     public void teleopPeriodic() {
-        officialRobot.tankDrive(baseDriverJoystick, 1, baseDriverJoystick, 5);
+    	/**put in switch case for drive mode (tank, arcade, GTA?)
+    	 */
+    	//initialize tank drive
+        drivetrain.tankDrive(driverController, 1, driverController, 5);
     }
     
     /**
