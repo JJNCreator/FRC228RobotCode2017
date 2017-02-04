@@ -23,51 +23,61 @@ import edu.wpi.first.wpilibj.DigitalInput;
  */
 public class Robot extends IterativeRobot {
 	//Pre-Init
+	
+	//AUTO SELECTION
     final String defaultAuto = "Do nothing";
     final String customAuto = "Drive foward";
     //autonomous selection
     String autoSelected;
     //autonomous selector
     SendableChooser autoChooser;
+    
+    //DRIVE MODE SELECTION
     //drive mode selection
-    String driveSelected;
+    String driveMode;
     //drive mode selector
     SendableChooser driveChooser;
+    
     //compressors
     Compressor c1, c2;
     //motor controllers
-    Victor v1,v2,v3,v4;
+    Victor leftDrive0,leftDrive1,rightDrive2,rightDrive3;
     //encoders
     Encoder e1,e2;
+    
     //drive function
-    RobotDrive officialRobot;
+    RobotDrive drivetrain;
     //controllers: driver: driving, operator: functions
     XboxController driverController,operatorController;
     //gear detection?
     DigitalInput gearDetectionLimitSwitch;
     
     
-    
-	
     /**
      * This function is run when the robot is first started up and should be
      * used for any initialization code.
      */
     public void robotInit() {
     	//Assign chooser for Autonomous programs
-        chooser = new SendableChooser();
-        chooser.addDefault("Auto_nothing", defaultAuto);
-        chooser.addObject("Auto_custom", customAuto);
+        autoChooser = new SendableChooser();
+        autoChooser.addDefault("Auto_nothing", defaultAuto);
+        autoChooser.addObject("Auto_custom", customAuto);
+        SmartDashboard.putData("AutoChoices", chooser);
+
+    	//Assign chooser for Teleop drive mode
+        teleopChooser = new SendableChooser();
+        teleopChooser.addDefault("Tank Drive", defaultAuto);
+        teleopChooser.addObject("Arcade Drive", customAuto);
         SmartDashboard.putData("AutoChoices", chooser);
         
         //Assign motor controllers
-        leftDrive1 = new Victor(0);
-        leftDrive2 = new Victor(1);
-        rightDrive1 = new Victor(2);
-        rightDrive2 = new Victor(3);
+        leftDrive0 = new Victor(0);
+        leftDrive1 = new Victor(1);
+        rightDrive2 = new Victor(2);
+        rightDrive3 = new Victor(3);
         
         //Assign Robot Drive
-        drivetrain = new RobotDrive(v1, v2, v3, v4);
+        drivetrain = new RobotDrive(leftDrive0, leftDrive1, rightDrive2, rightDrive3);
         
         //Assign XboxControllers
         driverController = new XboxController(0);
@@ -107,10 +117,10 @@ public class Robot extends IterativeRobot {
     
     public void teleopInit() {
     	//teleop init
-    	//get selection
-    	driveSelected = (String) driveChooser.getSelected();
-    	//print selection
-    	System.out.println("Drive mode selected: " + driveSelected);
+    	//get drive mode selection
+    	driveMode = (String) driveChooser.getSelected();
+    	//print drive mode selection
+    	System.out.println("Drive mode selected: " + driveMode);
     }
 
     /**
