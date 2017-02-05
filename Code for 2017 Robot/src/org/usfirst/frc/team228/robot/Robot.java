@@ -171,7 +171,7 @@ public class Robot extends IterativeRobot {
     		System.out.print("GTA Mode selected");
     		
     		//the last is negative because we're trying to reverse the positive and negative values of the axis
-    		drivetrain.arcadeDrive(driverController, 1, driverController, -3);
+    		drivetrain.arcadeDrive(-1 * driverController.getRawAxis(3), driverController.getRawAxis(1));
     		
     		break;
     	}
