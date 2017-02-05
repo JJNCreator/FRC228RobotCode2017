@@ -150,7 +150,7 @@ public class Robot extends IterativeRobot {
     	 */
     	
     	//initialize drive based on Id
-    	if(driveTrainId == 0) {
+    	/*if(driveTrainId == 0) {
     		drivetrain.arcadeDrive(driverController, 1, driverController, 5);
     	}
     	else if (driveTrainId == 1) {
@@ -158,6 +158,18 @@ public class Robot extends IterativeRobot {
     	}
     	else {
     		System.out.print("GTA Mode selected");
+    	}*/
+    	
+    	switch(driveTrainId) {
+    	case 0:
+    		drivetrain.arcadeDrive(driverController, 1, driverController, 5);
+    		break;
+    	case 1:
+            drivetrain.tankDrive(driverController, 1, driverController, 5);
+    		break;
+    	case 2:
+    		System.out.print("GTA Mode selected");
+    		break;
     	}
     }
     
