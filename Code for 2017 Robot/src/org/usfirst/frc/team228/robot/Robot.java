@@ -35,6 +35,11 @@ public class Robot extends IterativeRobot {
     //DRIVE MODE SELECTION
     //drive mode selection
     String driveMode;
+    final String arcadeMode = "Arcade";
+    final String tankMode = "Tank";
+    final String GTAMode = "GTA";
+    
+    int driveTrainId;
     //drive mode selector
     SendableChooser driveChooser;
     
@@ -60,14 +65,15 @@ public class Robot extends IterativeRobot {
     public void robotInit() {
     	//Assign chooser for Autonomous programs
         autoChooser = new SendableChooser();
-        autoChooser.addDefault("Auto_nothing", defaultAuto);
-        autoChooser.addObject("Auto_custom", customAuto);
-        SmartDashboard.putData("AutoChoices", autoChooser);
+        //autoChooser.addDefault("Auto_nothing", defaultAuto);
+        //autoChooser.addObject("Auto_custom", customAuto);
+        //SmartDashboard.putData("AutoChoices", autoChooser);
 
     	//Assign chooser for Teleop drive mode
         driveChooser = new SendableChooser();
-        driveChooser.addDefault("Tank Drive", defaultDrive); //we need to see how these work
-        driveChooser.addObject("Arcade Drive", arcadeDrive);
+        driveChooser.addDefault("Tank Drive", tankMode); //we need to see how these work
+        driveChooser.addObject("Arcade Drive", arcadeMode);
+        driveChooser.addObject("GTA", GTAMode);
         SmartDashboard.putData("Drive Choices", driveChooser);
         
         //Assign motor controllers
@@ -121,6 +127,19 @@ public class Robot extends IterativeRobot {
     	driveMode = (String) driveChooser.getSelected();
     	//print drive mode selection
     	System.out.println("Drive mode selected: " + driveMode);
+    	
+    	//Switches id based on drive mode selected
+    	switch(driveMode) {
+    	case "Arcade":
+    		driveTrainId = 0; //Arcade drive
+    		break;
+    	case "Tank":
+    		driveTrainId = 1; //Tank drive
+    		break;
+    	case "GTA":
+    		driveTrainId = 2; //GTA Drive
+    		break;
+    	}
     }
 
     /**
@@ -129,8 +148,17 @@ public class Robot extends IterativeRobot {
     public void teleopPeriodic() {
     	/**put in switch case for drive mode (tank, arcade, GTA?)
     	 */
-    	//initialize tank drive
-        drivetrain.tankDrive(driverController, 1, driverController, 5);
+    	
+    	//initialize drive based on Id
+    	if(driveTrainId == 0) {
+    		drivetrain.arcadeDrive(driverController, 1, driverController, 5);
+    	}
+    	else if (driveTrainId == 1) {
+            drivetrain.tankDrive(driverController, 1, driverController, 5);
+    	}
+    	else {
+    		System.out.print("GTA Mode selected");
+    	}
     }
     
     /**
