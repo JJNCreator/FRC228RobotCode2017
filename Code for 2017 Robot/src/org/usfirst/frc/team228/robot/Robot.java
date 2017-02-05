@@ -160,6 +160,9 @@ public class Robot extends IterativeRobot {
     		System.out.print("GTA Mode selected");
     	}*/
     	
+    	//Value for the GTA Mode arcade function and SmartDashboard data
+    	double firstArgumentValue = (-1 * driverController.getRawAxis(2) + driverController.getRawAxis(3));
+    	
     	switch(driveTrainId) {
     	case 0:
     		drivetrain.arcadeDrive(driverController, 1, driverController, 5);
@@ -171,7 +174,7 @@ public class Robot extends IterativeRobot {
     		System.out.print("GTA Mode selected");
     		
     		//the last is negative because we're trying to reverse the positive and negative values of the axis
-    		drivetrain.arcadeDrive(-1 * driverController.getRawAxis(3), driverController.getRawAxis(1));
+    		drivetrain.arcadeDrive(firstArgumentValue, driverController.getRawAxis(0));
     		
     		break;
     	}
@@ -179,7 +182,7 @@ public class Robot extends IterativeRobot {
     	SmartDashboard.putNumber("XAxisRightJoystick", driverController.getRawAxis(4));
     	SmartDashboard.putNumber("YAxisLeftJoystick", driverController.getRawAxis(1));
     	if(driveTrainId == 2) {
-    		SmartDashboard.putNumber("GTADriveValue", driverController.getRawAxis(3));
+    		SmartDashboard.putNumber("GTADriveValue", firstArgumentValue);
     	}
 
     	
