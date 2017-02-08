@@ -43,12 +43,13 @@ public class Robot extends IterativeRobot {
     //drive mode selector
     SendableChooser driveChooser;
     
-    //compressors
-    Compressor compressor1, compressor2;
-    //motor controllers, named based on port number
-    Victor leftDrive0,leftDrive1,rightDrive2,rightDrive3;
+    //compressor
+    Compressor compressor;
+    //motor controllers
+	//not named based on port number, in case that changes
+    Victor leftDrive1, leftDrive2, rightDrive1, rightDrive2;
     //encoders
-    Encoder encoder1,encoder2;
+    Encoder leftDriveEncoder, rightDriveEncoder;
     
     //drive function
     RobotDrive drivetrain;
@@ -77,13 +78,13 @@ public class Robot extends IterativeRobot {
         SmartDashboard.putData("Drive Choices", driveChooser);
         
         //Assign motor controllers
-        leftDrive0 = new Victor(0);
-        leftDrive1 = new Victor(1);
-        rightDrive2 = new Victor(2);
-        rightDrive3 = new Victor(3);
+        leftDrive1 = new Victor(0);
+        leftDrive2 = new Victor(1);
+        rightDrive1 = new Victor(2);
+        rightDrive2 = new Victor(3);
         
         //Assign Robot Drive
-        drivetrain = new RobotDrive(leftDrive0, leftDrive1, rightDrive2, rightDrive3);
+        drivetrain = new RobotDrive(leftDrive1, leftDrive2, rightDrive1, rightDrive2);
         
         //Assign XboxControllers
         driverController = new XboxController(0);
@@ -129,6 +130,7 @@ public class Robot extends IterativeRobot {
     	System.out.println("Drive mode selected: " + driveMode);
     	
     	//Switches id based on drive mode selected
+		// can we just pass the string into the switch case in periodic? - chris
     	switch(driveMode) {
     	case "Arcade":
     		driveTrainId = 0; //Arcade drive
@@ -146,44 +148,34 @@ public class Robot extends IterativeRobot {
      * This function is called periodically during operator control
      */
     public void teleopPeriodic() {
-    	/**put in switch case for drive mode (tank, arcade, GTA?)
-    	 */
-    	
-    	//initialize drive based on Id
-    	/*if(driveTrainId == 0) {
-    		drivetrain.arcadeDrive(driverController, 1, driverController, 5);
-    	}
-    	else if (driveTrainId == 1) {
-            drivetrain.tankDrive(driverController, 1, driverController, 5);
-    	}
-    	else {
-    		System.out.print("GTA Mode selected");
-    	}*/
     	
     	//Value for the GTA Mode arcade function and SmartDashboard data
-    	double firstArgumentValue = (-1 * driverController.getRawAxis(2) + driverController.getRawAxis(3));
+    	double combinedTriggerValue;
     	
     	switch(driveTrainId) {
     	case 0:
-    		drivetrain.arcadeDrive(driverController, 1, driverController, 5);
+    		drivetrain.arcadeDrive(driverController, 1, driverController, 4);
     		break;
     	case 1:
             drivetrain.tankDrive(driverController, 1, driverController, 5);
     		break;
     	case 2:
-    		System.out.print("GTA Mode selected");
+			//the print statement would print repeatedly if run here; consider moving to init?
+    		//System.out.print("GTA Mode selected"); 
+			combinedTriggerValue = (-1 * driverController.getRawAxis(2) + driverController.getRawAxis(3));
+    		drivetrain.arcadeDrive(combinedTriggerValue, driverController.getRawAxis(0));
     		
-    		//the last is negative because we're trying to reverse the positive and negative values of the axis
-    		drivetrain.arcadeDrive(firstArgumentValue, driverController.getRawAxis(0));
-    		
-    		break;
+			SmartDashboard.putNumber("GTADriveValue", firstArgumentValue);
+			break;
     	}
-    	
+    	//the code below duplicates what is already shown on the driver station?
     	SmartDashboard.putNumber("XAxisRightJoystick", driverController.getRawAxis(4));
     	SmartDashboard.putNumber("YAxisLeftJoystick", driverController.getRawAxis(1));
-    	if(driveTrainId == 2) {
+		
+		//moved code from below into switch case code
+    	/*if (driveTrainId == 2) {
     		SmartDashboard.putNumber("GTADriveValue", firstArgumentValue);
-    	}
+    	}*/
 
     	
     }
