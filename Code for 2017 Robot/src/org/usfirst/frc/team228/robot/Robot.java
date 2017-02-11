@@ -34,7 +34,7 @@ public class Robot extends IterativeRobot {
 	SendableChooser autoChooser;
 	
 	//Checks if auto is on
-	boolean inAuto = false;
+	boolean inAuto = true;
 	
 	//DRIVE MODE SELECTION
 	//drive mode selection
@@ -158,35 +158,40 @@ public class Robot extends IterativeRobot {
 		while(inAuto == true) { //While the robot is in auto mode
 			
 			//Have all drive motors go forward
-			leftDrive1.set(0.4f);
-			leftDrive2.set(0.4f);
-			rightDrive1.set(0.4f);
-			rightDrive2.set(0.4f);
+			leftDrive1.setSpeed(1f);
+			leftDrive2.setSpeed(1f);
+			rightDrive1.setSpeed(-1f);
+			rightDrive2.setSpeed(-1f);
 			
-			//Resets all four drive motors
-			ResetAllMotors();
 			
 			//Delay for two seconds
 			Timer.delay(2f);
 			
+			//Resets all four drive motors
+			ResetAllMotors();
+			
+			
 			//Have all drive motors go backward
-			leftDrive1.set(-0.4f);
-			leftDrive2.set(-0.4f);
-			rightDrive1.set(-0.4f);
-			rightDrive2.set(-0.4f);
+			leftDrive1.setSpeed(-1f);
+			leftDrive2.setSpeed(-1f);
+			rightDrive1.setSpeed(1f);
+			rightDrive2.setSpeed(1f);
+			
 			
 			//Reset all four motors again
 			ResetAllMotors();
+			
+			Timer.delay(0.5f);
 			
 			inAuto = false;
 		}
 	}
 	
 	private void ResetAllMotors() {
-		leftDrive1.set(0.0f);
-		leftDrive2.set(0.0f);
-		rightDrive1.set(0.0f);
-		rightDrive2.set(0.0f);
+		leftDrive1.setSpeed(0.0f);
+		leftDrive2.setSpeed(0.0f);
+		rightDrive1.setSpeed(0.0f);
+		rightDrive2.setSpeed(0.0f);
 
 	}
 	
