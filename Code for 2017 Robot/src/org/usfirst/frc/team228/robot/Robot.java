@@ -85,9 +85,9 @@ public class Robot extends IterativeRobot {
 	public void robotInit() {
 		//Assign chooser for Autonomous programs
 		autoChooser = new SendableChooser();
-		autoChooser.addDefault("Auto_nothing", defaultAuto);
-		autoChooser.addObject("Auto_custom", customAuto);
-		SmartDashboard.putData("AutoChoices", autoChooser);
+		autoChooser.addDefault("Auto nothing", defaultAuto);
+		autoChooser.addObject("Auto custom", customAuto);
+		SmartDashboard.putData("Auto Choices", autoChooser);
 
 		//Assign chooser for Teleop drive mode
 		driveChooser = new SendableChooser();
@@ -202,21 +202,8 @@ public class Robot extends IterativeRobot {
 		//get drive mode selection (tank, arcade, GTA?)
 		//driveMode = (String) driveChooser.getSelected();
 		//print drive mode selection
-		System.out.println("Drive mode selected: " + driveMode);
+		System.out.println("Drive mode selected: " + driveMode);		
 		
-		//Switches id based on drive mode selected
-		// can we just pass the string into the switch case in periodic? - chris
-		/*switch(driveMode) {
-		case "Arcade":
-			driveTrainId = 0; //Arcade drive
-			break;
-		case "Tank":
-			driveTrainId = 1; //Tank drive
-			break;
-		case "GTA":
-			driveTrainId = 2; //GTA Drive
-			break;
-		}*/
 	}
 
 	/**
