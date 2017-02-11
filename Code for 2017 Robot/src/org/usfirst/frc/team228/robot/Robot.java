@@ -27,11 +27,14 @@ public class Robot extends IterativeRobot {
 	
 	//AUTO SELECTION
 	final String defaultAuto = "Do nothing";
-	final String customAuto = "Drive foward";
+	final String customAuto = "Custom Auto";
 	//autonomous selection
 	String autoSelected;
 	//autonomous selector
 	SendableChooser autoChooser;
+	
+	//Checks if auto is on
+	boolean inAuto = false;
 	
 	//DRIVE MODE SELECTION
 	//drive mode selection
@@ -82,9 +85,9 @@ public class Robot extends IterativeRobot {
 	public void robotInit() {
 		//Assign chooser for Autonomous programs
 		autoChooser = new SendableChooser();
-		//autoChooser.addDefault("Auto_nothing", defaultAuto);
-		//autoChooser.addObject("Auto_custom", customAuto);
-		//SmartDashboard.putData("AutoChoices", autoChooser);
+		autoChooser.addDefault("Auto_nothing", defaultAuto);
+		autoChooser.addObject("Auto_custom", customAuto);
+		SmartDashboard.putData("AutoChoices", autoChooser);
 
 		//Assign chooser for Teleop drive mode
 		driveChooser = new SendableChooser();
@@ -128,6 +131,8 @@ public class Robot extends IterativeRobot {
 		autoSelected = (String) autoChooser.getSelected();
 		//print autonomous selection
 		System.out.println("Auto selected: " + autoSelected);
+		
+		inAuto = true;
 	}
 
 	/**
@@ -136,6 +141,7 @@ public class Robot extends IterativeRobot {
 	public void autonomousPeriodic() {
 		switch(autoSelected) {
 		case customAuto:
+			CustomAuto();
 		//Put custom auto code here   
 			break;
 		case defaultAuto:
@@ -146,11 +152,50 @@ public class Robot extends IterativeRobot {
 	}
 	
 	/**
+	 * Use for any custom behaviour in autonomous mode
+	 */
+	public void CustomAuto() {
+		while(inAuto == true) { //While the robot is in auto mode
+			
+			//Have all drive motors go forward
+			leftDrive1.set(0.4f);
+			leftDrive2.set(0.4f);
+			rightDrive1.set(0.4f);
+			rightDrive2.set(0.4f);
+			
+			//Resets all four drive motors
+			ResetAllMotors();
+			
+			//Delay for two seconds
+			Timer.delay(2f);
+			
+			//Have all drive motors go backward
+			leftDrive1.set(-0.4f);
+			leftDrive2.set(-0.4f);
+			rightDrive1.set(-0.4f);
+			rightDrive2.set(-0.4f);
+			
+			//Reset all four motors again
+			ResetAllMotors();
+			
+			inAuto = false;
+		}
+	}
+	
+	private void ResetAllMotors() {
+		leftDrive1.set(0.0f);
+		leftDrive2.set(0.0f);
+		rightDrive1.set(0.0f);
+		rightDrive2.set(0.0f);
+
+	}
+	
+	/**
 	 * This function is called once at the beginning of operator control
 	 */
 	public void teleopInit() {
 		//get drive mode selection (tank, arcade, GTA?)
-		driveMode = (String) driveChooser.getSelected();
+		//driveMode = (String) driveChooser.getSelected();
 		//print drive mode selection
 		System.out.println("Drive mode selected: " + driveMode);
 		
@@ -174,17 +219,19 @@ public class Robot extends IterativeRobot {
 	 */
 	public void teleopPeriodic() {
 		
+		driveMode = (String)driveChooser.getSelected();
+		
 		//Value for the GTA Mode arcade function and SmartDashboard data
 		double combinedTriggerValue;
 		
 		switch(driveMode) {
-		case "Arcade":
+		case arcadeMode:
 			drivetrain.arcadeDrive(driverController, 1, driverController, 4);
 			break;
-		case "Tank":
+		case tankMode:
 			drivetrain.tankDrive(driverController, 1, driverController, 5);
 			break;
-		case "GTA":
+		case GTAMode:
 			//the print statement would print repeatedly if run here; consider moving to init?
 			//System.out.print("GTA Mode selected"); 
 			combinedTriggerValue = (-1 * driverController.getRawAxis(2) + driverController.getRawAxis(3));
