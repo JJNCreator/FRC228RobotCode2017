@@ -23,6 +23,7 @@ import edu.wpi.first.wpilibj.DigitalInput;
  */
 public class Robot extends IterativeRobot {
 	//Pre-Init
+	//Create variables
 	
 	//AUTO SELECTION
 	final String defaultAuto = "Do nothing";
@@ -39,7 +40,7 @@ public class Robot extends IterativeRobot {
 	final String tankMode = "Tank";
 	final String GTAMode = "GTA";
 	
-	int driveTrainId;
+	//int driveTrainId;
 	//drive mode selector
 	SendableChooser driveChooser;
 	
@@ -155,7 +156,7 @@ public class Robot extends IterativeRobot {
 		
 		//Switches id based on drive mode selected
 		// can we just pass the string into the switch case in periodic? - chris
-		switch(driveMode) {
+		/*switch(driveMode) {
 		case "Arcade":
 			driveTrainId = 0; //Arcade drive
 			break;
@@ -165,7 +166,7 @@ public class Robot extends IterativeRobot {
 		case "GTA":
 			driveTrainId = 2; //GTA Drive
 			break;
-		}
+		}*/
 	}
 
 	/**
@@ -176,14 +177,14 @@ public class Robot extends IterativeRobot {
 		//Value for the GTA Mode arcade function and SmartDashboard data
 		double combinedTriggerValue;
 		
-		switch(driveTrainId) {
-		case 0:
+		switch(driveMode) {
+		case "Arcade":
 			drivetrain.arcadeDrive(driverController, 1, driverController, 4);
 			break;
-		case 1:
+		case "Tank":
 			drivetrain.tankDrive(driverController, 1, driverController, 5);
 			break;
-		case 2:
+		case "GTA":
 			//the print statement would print repeatedly if run here; consider moving to init?
 			//System.out.print("GTA Mode selected"); 
 			combinedTriggerValue = (-1 * driverController.getRawAxis(2) + driverController.getRawAxis(3));
