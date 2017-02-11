@@ -237,7 +237,10 @@ public class Robot extends IterativeRobot {
 			combinedTriggerValue = (-1 * driverController.getRawAxis(2) + driverController.getRawAxis(3));
 			drivetrain.arcadeDrive(combinedTriggerValue, driverController.getRawAxis(0));
 			
-			SmartDashboard.putNumber("GTADriveValue", firstArgumentValue);
+			//SmartDashboard.putNumber("GTADriveValue", firstArgumentValue);
+			
+			SmartDashboard.putNumber("GTADriveValue", combinedTriggerValue);
+
 			break;
 		}
 		//the code below duplicates what is already shown on the driver station?
@@ -284,6 +287,6 @@ public class Robot extends IterativeRobot {
 		//intake should go in, feeder should go OUT 
 		//since intake and feeder gearboxes run opposite, pass the SAME value to both
 		intakeBelt.set(intakeSpeed);
-		feederBelt.set(feedSpeed);
+		feederBelt.set(-1 * intakeSpeed);
 	}
 }
