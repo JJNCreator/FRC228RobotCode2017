@@ -22,27 +22,30 @@ import edu.wpi.first.wpilibj.DigitalInput;
  * directory.
  */
 public class Robot extends IterativeRobot {
-	//Pre-Init
+	//PRE INIT
 	//Create variables
 	
 	//AUTO SELECTION
 	final String defaultAuto = "Do nothing";
 	final String customAuto = "Custom Auto";
-	//autonomous selection
+	//user's autonomous selection
 	String autoSelected;
 	//autonomous selector
 	SendableChooser autoChooser;
 	
 	//Checks if auto is on
-	boolean inAuto = true;
+	boolean inAuto; //removed "= true", because it shouldn't default to true
+	
+	//Count time elapsed while in autonomous
+	//Timer autoTimer;
 	
 	//DRIVE MODE SELECTION
-	//drive mode selection
+	//user's drive mode selection
 	String driveMode;
+	//Strings for each particular mode
 	final String arcadeMode = "Arcade";
 	final String tankMode = "Tank";
 	final String GTAMode = "GTA";
-	
 	//int driveTrainId;
 	//drive mode selector
 	SendableChooser driveChooser;
@@ -141,7 +144,9 @@ public class Robot extends IterativeRobot {
 	public void autonomousPeriodic() {
 		switch(autoSelected) {
 		case customAuto:
-			CustomAuto();
+			//CustomAuto();
+			//commenting out because we're rewriting this function
+			testAuto();
 		//Put custom auto code here   
 			break;
 		case defaultAuto:
@@ -152,9 +157,9 @@ public class Robot extends IterativeRobot {
 	}
 	
 	/**
-	 * Use for any custom behaviour in autonomous mode
+	 * Jake's Autonomous Test - 2/11/17
 	 */
-	public void CustomAuto() {
+	/*public void CustomAuto() {
 		while(inAuto == true) { //While the robot is in auto mode
 			
 			//Have all drive motors go forward
@@ -168,7 +173,7 @@ public class Robot extends IterativeRobot {
 			Timer.delay(2f);
 			
 			//Resets all four drive motors
-			ResetAllMotors();
+			//ResetAllMotors(); //motors don't need to be reset here
 			
 			
 			//Have all drive motors go backward
@@ -187,12 +192,41 @@ public class Robot extends IterativeRobot {
 		}
 	}
 	
+	//Commented below function out because arcadeDrive() or tankDrive() can do this same thing
+	//it also isn't accurate - it only zeroes the drive motors
 	private void ResetAllMotors() {
 		leftDrive1.setSpeed(0.0f);
 		leftDrive2.setSpeed(0.0f);
 		rightDrive1.setSpeed(0.0f);
 		rightDrive2.setSpeed(0.0f);
 
+	}*/
+	
+	/**Haley and Chris Auto Test
+	 * designed to be identical in behavior to CustomAuto 
+	 * but written in a more robust way as an example for programming team
+	*/
+	
+	public void testAuto() {
+		//0s: forward
+		//2s: backward
+		//4s: stop
+		
+		//at 0s: drive forward for 2 seconds
+		if (Timer.getMatchTime() < 2)
+		{
+			drivetrain.arcadeDrive(1.0, 0.0);
+		}
+		//at 2s: drive backwards for 2 seconds
+		else if (Timer.getMatchTime() < 4)
+		{
+			drivetrain.arcadeDrive(-1.0, 0.0);
+		}
+		//at 4s: stop
+		else
+		{
+			drivetrain.arcadeDrive(0.0, 0.0);
+		}
 	}
 	
 	/**
@@ -224,12 +258,9 @@ public class Robot extends IterativeRobot {
 			drivetrain.tankDrive(driverController, 1, driverController, 5);
 			break;
 		case GTAMode:
-			//the print statement would print repeatedly if run here; consider moving to init?
-			//System.out.print("GTA Mode selected"); 
+			//don't put print statements here; they would print repeatedly
 			combinedTriggerValue = (-1 * driverController.getRawAxis(2) + driverController.getRawAxis(3));
 			drivetrain.arcadeDrive(combinedTriggerValue, driverController.getRawAxis(0));
-			
-			//SmartDashboard.putNumber("GTADriveValue", firstArgumentValue);
 			
 			SmartDashboard.putNumber("GTADriveValue", combinedTriggerValue);
 
