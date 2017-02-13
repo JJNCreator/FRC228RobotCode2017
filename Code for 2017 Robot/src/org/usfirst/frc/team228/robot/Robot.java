@@ -110,10 +110,9 @@ public class Robot extends IterativeRobot {
 		//Assign ball motor controllers
 		intakeBelt = new VictorSP(4);
 		feederBelt = new VictorSP(5);
-		//6, 7, and 8 will be the shooter
 		
 		//Assign hanger motor controllers
-		hangingWinch = new VictorSP(9);
+		hangingWinch = new VictorSP(6);
 		hangFeedForward = false;
 		hangButtonPrev = false; 
 		
