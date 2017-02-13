@@ -79,6 +79,9 @@ public class Robot extends IterativeRobot {
 	
 	//hanging motor controllers
 	VictorSP hangingWinch;
+	//hanging variables
+	boolean hangFeedForward; //when true, will apply feed forward value to hanger 
+	boolean hangButtonPrev; //records state of B button from last iteration
 	
 	/**
 	 * This function is run when the robot is first started up and should be
@@ -111,6 +114,8 @@ public class Robot extends IterativeRobot {
 		
 		//Assign hanger motor controllers
 		hangingWinch = new VictorSP(9);
+		hangFeedForward = false;
+		hangButtonPrev = false; 
 		
 		//Assign Robot Drive
 		drivetrain = new RobotDrive(leftDrive1, leftDrive2, rightDrive1, rightDrive2);
@@ -277,6 +282,9 @@ public class Robot extends IterativeRobot {
 		//ball feeding
 		feedBalls(operatorController.getRawAxis(1)); //left joystick y axis
 		
+		//hanging
+		//right trigger passes for throttle value, X button toggles feed-forward on and off
+		hangingControl(operatorController.getRawAxis(3), operatorController.getXButton());
 	}
 	
 	
@@ -310,5 +318,40 @@ public class Robot extends IterativeRobot {
 		//since intake and feeder gearboxes run opposite, pass the SAME value to both
 		intakeBelt.set(intakeSpeed);
 		feederBelt.set(-1 * intakeSpeed);
+	}
+	
+	/** 
+	* This function controls the hanging winch and feed forward
+	* hangingSpeed is expected to be between 0 and 1
+	* This allows a trigger value to be passed into it, for example
+	* If this is changed to a joystick, code will still work, but will allow hanger to run in reverse
+	*
+	* When the feed forward is enabled, hanger will stall at small voltage even without user input
+	* This is designed to assist with scoring the bonus points at the end of the match
+	*/
+	public void hangingControl(double hangingSpeed, boolean ffButton) {
+		final double hangFFValue = 0.1; //change this to change how much FF to apply
+		
+		//first check to see if the feed forward button has been pressed AND if it changed state
+		//otherwise you would rapidly alternate between ff being on and off as long as the button was pressed!
+		if (ffButton != hangButtonPrev && ffButton) { 
+			//toggle the state of hang feed forward
+			hangFeedForward = !hangFeedForward;
+		}
+		//now that check is complete, store value of button for next iteration of loop
+		hangButtonPrev = ffButton;
+		
+		//if feed forward is on, apply it to the input
+		if (hangFeedForward) {
+			hangingSpeed += hangFFValue;
+		}
+		//if resulting value is >1.0, reduce it
+		if (hangingSpeed > 1.0) {
+			hangingSpeed = 1.0;
+		}
+		
+		//actually do the hanging motor command here
+		//if you need to invert this, also invert the hangFFValue constant above
+		hangingWinch.set(hangingSpeed);
 	}
 }
