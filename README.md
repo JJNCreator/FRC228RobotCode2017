@@ -10,3 +10,5 @@ This is code for the robot of GUS Robotics for the 2017 game FIRST STEAMWORKS.  
 This is also available for programmers of other teams to read and help build their own code.  
 
 THIS IS A JAVA ONLY PROJECT.  There is no C++ code in the project.  
+
+Link to CTRE: http://www.ctr-electronics.com/downloads/installers/CTRE%20Toolsuite%20v4.4.1.10.zip
