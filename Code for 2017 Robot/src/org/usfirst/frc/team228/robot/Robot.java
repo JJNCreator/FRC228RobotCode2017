@@ -138,7 +138,7 @@ public class Robot extends IterativeRobot {
 		//print autonomous selection
 		System.out.println("Auto selected: " + autoSelected);
 		
-		inAuto = true;
+		//inAuto = true;
 	}
 
 	/**
