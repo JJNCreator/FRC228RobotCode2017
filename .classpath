@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="Code for 2017 Robot/src"/>
+	<classpathentry kind="lib" path="Code for 2017 Robot/dist/FRCUserProgram.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="output" path="Code for 2017 Robot/build"/>
+</classpath>

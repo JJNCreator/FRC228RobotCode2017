@@ -102,14 +102,25 @@ public class Robot extends IterativeRobot {
 		SmartDashboard.putData("Drive Choices", driveChooser);
 		
 		//Assign drive motor controllers
+		/*
 		leftDrive1 = new VictorSP(0);
 		leftDrive2 = new VictorSP(1);
 		rightDrive1 = new VictorSP(2);
 		rightDrive2 = new VictorSP(3);
+		*/
+		
+		//THIS IS FOR THE 2016 ROBOT ONLY:
+		//COMMENT THIS OUT FOR THE NEW ROBOT
+		leftDrive1 = new VictorSP(0);
+		leftDrive2 = new VictorSP(1);
+		rightDrive1 = new VictorSP(3);
+		rightDrive2 = new VictorSP(4);
+		//^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+		
 		
 		//Assign ball motor controllers
-		intakeBelt = new VictorSP(4);
-		feederBelt = new VictorSP(5);
+		intakeBelt = new VictorSP(4); //fuel intake
+		feederBelt = new VictorSP(5); //shooter feed belt
 		
 		//Assign hanger motor controllers
 		hangingWinch = new VictorSP(6);
@@ -353,4 +364,5 @@ public class Robot extends IterativeRobot {
 		//if you need to invert this, also invert the hangFFValue constant above
 		hangingWinch.set(hangingSpeed);
 	}
+
 }
