@@ -11,8 +11,10 @@ import edu.wpi.first.wpilibj.VictorSP; //not victor like we thought
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.Solenoid;
+import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.DigitalInput;
 import com.ctre.CANTalon;
+
 
 /**
  * The VM is configured to automatically run this class, and to call the
