@@ -119,8 +119,8 @@ public class Robot extends IterativeRobot {
 		
 		
 		//Assign ball motor controllers
-		intakeBelt = new VictorSP(4); //fuel intake
-		feederBelt = new VictorSP(5); //shooter feed belt
+		intakeBelt = new VictorSP(7); //fuel intake //4
+		feederBelt = new VictorSP(8); //shooter feed belt //5
 		
 		//Assign hanger motor controllers
 		hangingWinch = new VictorSP(6);
@@ -149,7 +149,7 @@ public class Robot extends IterativeRobot {
 		//print autonomous selection
 		System.out.println("Auto selected: " + autoSelected);
 		
-		inAuto = true;
+		//inAuto = true;
 	}
 
 	/**
