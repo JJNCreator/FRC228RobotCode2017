@@ -1,4 +1,3 @@
-//Test change
 package org.usfirst.frc.team228.robot;
 
 import edu.wpi.first.wpilibj.Compressor;
@@ -13,6 +12,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.DigitalInput;
+import com.ctre.CANTalon;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -56,6 +56,9 @@ public class Robot extends IterativeRobot {
 	VictorSP leftDrive1, leftDrive2, rightDrive1, rightDrive2;
 	//encoders
 	Encoder leftDriveEncoder, rightDriveEncoder;
+	
+	//Talons
+	CANTalon shooterMotor1,shooterMotor2,shooterMotor3;
 	
 	//drive function
 	RobotDrive drivetrain;
