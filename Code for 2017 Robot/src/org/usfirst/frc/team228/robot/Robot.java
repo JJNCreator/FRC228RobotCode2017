@@ -63,6 +63,8 @@ public class Robot extends IterativeRobot {
 	
 	//Talons
 	TalonSRX shooterMotor1,shooterMotor2,shooterMotor3;
+	
+	boolean shooterButtonPressed;
 		
 	//drive function
 	RobotDrive drivetrain;
@@ -108,6 +110,8 @@ public class Robot extends IterativeRobot {
 		driveChooser.addObject("Arcade Drive", arcadeMode);
 		driveChooser.addObject("GTA", GTAMode);
 		SmartDashboard.putData("Drive Choices", driveChooser);
+		
+		shooterButtonPressed = false;
 		
 		//Assign drive motor controllers
 		/*
@@ -297,7 +301,12 @@ public class Robot extends IterativeRobot {
 	 * 
 	 */
 	public void shooters(boolean button) {
-	if(button) {
+	if(button && button != shooterButtonPressed) {
+		shooterButtonPressed = !shooterButtonPressed;
+	}
+	
+	shooterButtonPressed = button;
+	if(shooterButtonPressed) {
 		shooterMotor1.set(1.0);
 		shooterMotor2.set(1.0);
 		shooterMotor3.set(1.0);
@@ -306,7 +315,7 @@ public class Robot extends IterativeRobot {
 		shooterMotor1.set(0.0);
 		shooterMotor2.set(0.0);
 		shooterMotor3.set(0.0);
-		}
+	}
 	}
 	
 	/** 
