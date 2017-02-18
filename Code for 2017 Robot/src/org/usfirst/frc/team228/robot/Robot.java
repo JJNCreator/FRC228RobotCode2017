@@ -2,6 +2,7 @@ package org.usfirst.frc.team228.robot;
 
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.Encoder;
+import edu.wpi.first.wpilibj.GenericHID.Hand;
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.XboxController;
@@ -14,6 +15,7 @@ import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.DigitalInput;
 import com.ctre.CANTalon;
+import edu.wpi.first.wpilibj.TalonSRX;
 
 
 /**
@@ -57,8 +59,8 @@ public class Robot extends IterativeRobot {
 	Solenoid leftShifter, rightShifter;
 	
 	//Talons
-	CANTalon shooterMotor1,shooterMotor2,shooterMotor3;
-	
+	TalonSRX shooterMotor1,shooterMotor2,shooterMotor3;
+		
 	//drive function
 	RobotDrive drivetrain;
 	//controllers: driver: driving, operator: functions (like intake and shooter)
@@ -158,7 +160,7 @@ public class Robot extends IterativeRobot {
 		//Assign hanger motor controllers
 		hangingWinch = new VictorSP(6);
 		hangFeedForward = false;
-		hangButtonPrev = false; 
+		hangButtonPrev = false;
 		
 		//Assign Robot Drive
 		drivetrain = new RobotDrive(leftDrive1, leftDrive2, rightDrive1, rightDrive2);
@@ -206,53 +208,6 @@ public class Robot extends IterativeRobot {
 			break;
 		}
 	}
-	
-	/**
-	 * Jake's Autonomous Test - 2/11/17
-	 */
-	/*public void CustomAuto() {
-		while(inAuto == true) { //While the robot is in auto mode
-			
-			//Have all drive motors go forward
-			leftDrive1.setSpeed(1f);
-			leftDrive2.setSpeed(1f);
-			rightDrive1.setSpeed(-1f);
-			rightDrive2.setSpeed(-1f);
-			
-			
-			//Delay for two seconds
-			Timer.delay(2f);
-			
-			//Resets all four drive motors
-			//ResetAllMotors(); //motors don't need to be reset here
-			
-			
-			//Have all drive motors go backward
-			leftDrive1.setSpeed(-1f);
-			leftDrive2.setSpeed(-1f);
-			rightDrive1.setSpeed(1f);
-			rightDrive2.setSpeed(1f);
-			
-			
-			//Reset all four motors again
-			ResetAllMotors();
-			
-			Timer.delay(0.5f);
-			
-			inAuto = false;
-		}
-	}
-	
-	//Commented below function out because arcadeDrive() or tankDrive() can do this same thing
-	//it also isn't accurate - it only zeroes the drive motors
-	private void ResetAllMotors() {
-		leftDrive1.setSpeed(0.0f);
-		leftDrive2.setSpeed(0.0f);
-		rightDrive1.setSpeed(0.0f);
-		rightDrive2.setSpeed(0.0f);
-
-	}*/
-	
 	/**Haley and Chris Auto Test
 	 * designed to be identical in behavior to CustomAuto 
 	 * but written in a more robust way as an example for programming team
@@ -327,6 +282,7 @@ public class Robot extends IterativeRobot {
 		//ball intake
 		intakeBalls(operatorController.getRawAxis(2)); //left trigger
 		//ball feeding
+<<<<<<< HEAD
 		feedBalls(operatorController.getRawAxis(1)); //left joystick y axis
 		//dumperGate toggle with right bumper (6) (on/open/shoot)/(DEFAULT: off/closed/no shoot)
 		dumperGateControl(operatorController.getRawButton(6));
@@ -339,6 +295,12 @@ public class Robot extends IterativeRobot {
 		//human load gate
 			//toggle HLGate on/off (open/closed) with Y
 			//default closed
+=======
+		feedBalls(operatorController.getRawAxis(1)); //left joystick y axis		
+		//Shooter
+		shooters(operatorController.getRawButton(5));
+		
+>>>>>>> origin/master
 		//hanging
 		//right trigger passes for throttle value, X button toggles feed-forward on and off
 		hangingControl(operatorController.getRawAxis(3), operatorController.getXButton());
@@ -375,6 +337,22 @@ public class Robot extends IterativeRobot {
 		//since intake and feeder gearboxes run opposite, pass the SAME value to both
 		intakeBelt.set(intakeSpeed);
 		feederBelt.set(-1 * intakeSpeed);
+	}
+	/**
+	 * This function handles the shooter motors on the 2017 robot.  
+	 * 
+	 */
+	public void shooters(boolean button) {
+	if(button) {
+		shooterMotor1.set(1.0);
+		shooterMotor2.set(1.0);
+		shooterMotor3.set(1.0);
+	}
+	else {
+		shooterMotor1.set(0.0);
+		shooterMotor2.set(0.0);
+		shooterMotor3.set(0.0);
+		}
 	}
 	
 	/** 
