@@ -128,7 +128,6 @@ public class Robot extends IterativeRobot {
 		compressor = new Compressor();
 		
 		//Assign drive motor controllers 2017 ROBOT:
-		shooterButtonPressed = false;
 		
 		//Assign drive motor controllers
 		/*
@@ -179,6 +178,9 @@ public class Robot extends IterativeRobot {
 		//example for toggling buttons, set to false
 		//exampleButtonState = false;
 		//exampleButtonPrev = false;
+		
+		shooterButtonPressed = false;
+
 		
 	}
 	
