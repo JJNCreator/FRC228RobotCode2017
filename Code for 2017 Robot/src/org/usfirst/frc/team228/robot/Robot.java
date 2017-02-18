@@ -324,6 +324,7 @@ public class Robot extends IterativeRobot {
 	* This function controls the belt mechanisms when feeding the shooter
 	* feedSpeed is expected to be between -1 and 1
 	* This allows a joystick value to be passed into it, for example
+	* @param speed for the feeder and intake
 	*/
 	
 	public void feedBalls(double feedSpeed) {
@@ -337,6 +338,7 @@ public class Robot extends IterativeRobot {
 	* This function controls the belt mechanisms when picking up off the floor
 	* intakeSpeed is expected to be between 0 and 1
 	* This allows a trigger value to be passed into it, for example
+	* @param intakeSpeed speed for the intake and feeder
 	*/
 	public void intakeBalls(double intakeSpeed) {
 		//intake should go in, feeder should go OUT 
@@ -346,7 +348,7 @@ public class Robot extends IterativeRobot {
 	}
 	/**
 	 * This function handles the shooter motors on the 2017 robot.  
-	 * 
+	 * @param shooterButton tells whether the motors should be set to 1.0
 	 */
 	public void shooters(boolean shooterButton) {
 	if(shooterButton && shooterButton != shooterButtonPressed) {
@@ -374,6 +376,8 @@ public class Robot extends IterativeRobot {
 	*
 	* When the feed forward is enabled, hanger will stall at small voltage even without user input
 	* This is designed to assist with scoring the bonus points at the end of the match
+	* @param hangingSpeed speed for the hanging motor
+	* @param ffButton checks to see if the motor is being used
 	*/
 	public void hangingControl(double hangingSpeed, boolean ffButton) {
 		final double hangFFValue = 0.1; //change this to change how much FF to apply
