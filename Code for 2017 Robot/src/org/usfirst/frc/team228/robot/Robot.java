@@ -72,8 +72,10 @@ public class Robot extends IterativeRobot {
 	
 	//gates (human-load, dumper)
 	Solenoid HLGate, dumperGate;
+	boolean HLGateButtonState; //when true, will open the human load gate 
+	boolean HLGateButtonPrev; //records state of the button from last iteration
 	boolean dumperButtonState; //when true, will open the dumper gate
-	boolean dumperButtonPrev; //records state of right bumper from last iteration
+	boolean dumperButtonPrev; //records state of the button from last iteration
 	
 	//shooter controllers
 	//***insert Talon code here***
@@ -282,25 +284,22 @@ public class Robot extends IterativeRobot {
 		//ball intake
 		intakeBalls(operatorController.getRawAxis(2)); //left trigger
 		//ball feeding
-<<<<<<< HEAD
 		feedBalls(operatorController.getRawAxis(1)); //left joystick y axis
 		//dumperGate toggle with right bumper (6) (on/open/shoot)/(DEFAULT: off/closed/no shoot)
 		dumperGateControl(operatorController.getRawButton(6));
+		//human load gate toggle (on/open)/(DEFAULT: off/closed) with Y
+		HLGateControl(operatorController.getYButton());
 		//gear mechanism
 			//toggle gearRotator on/off (down/up) with A
 			//default off
 		//gear grip
 			//toggle both leftPincher and rightPincher with B (K Forward = closed, K Reverse = open)
 			//default ?
-		//human load gate
-			//toggle HLGate on/off (open/closed) with Y
-			//default closed
-=======
+
 		feedBalls(operatorController.getRawAxis(1)); //left joystick y axis		
 		//Shooter
 		shooters(operatorController.getRawButton(5));
 		
->>>>>>> origin/master
 		//hanging
 		//right trigger passes for throttle value, X button toggles feed-forward on and off
 		hangingControl(operatorController.getRawAxis(3), operatorController.getXButton());
@@ -390,7 +389,7 @@ public class Robot extends IterativeRobot {
 		hangingWinch.set(hangingSpeed);
 	}
 	/**
-	 * This function controls the dumper gate using the right bumper
+	 * This function toggles the dumper gate using a button
 	 * @param dumperButton
 	 */
 	
@@ -414,6 +413,32 @@ public class Robot extends IterativeRobot {
 		{
 			//dumperGate closed/shoot state
 			dumperGate.set(false);
+		}
+	}
+	/**
+	 * This function toggles the human load gate using a button
+	 * @param HLGateButton
+	 */
+	public void HLGateControl(boolean HLGateButton)
+	{
+		//if the button is pressed, and if it changed state
+		if (HLGateButton && HLGateButton != HLGateButtonPrev)
+		{ 
+			//toggle the state of button
+			HLGateButtonState = !HLGateButtonState;
+		}
+		//now that check is complete, store value of HLGateButton for next iteration of loop
+		HLGateButtonPrev = HLGateButton;
+
+		if (HLGateButtonState)
+		{
+			//HLGate open/no shoot state
+			HLGate.set(true);
+		}
+		else
+		{
+			//HLGate closed/shoot state
+			HLGate.set(false);
 		}
 	}
 	
