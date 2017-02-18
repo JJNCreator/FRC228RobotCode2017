@@ -124,16 +124,13 @@ public class Robot extends IterativeRobot {
 		driveChooser.addObject("GTA", GTAMode);
 		SmartDashboard.putData("Drive Choices", driveChooser);
 		
-<<<<<<< HEAD
 		//Assign compressor
 		compressor = new Compressor();
 		
 		//Assign drive motor controllers 2017 ROBOT:
-=======
 		shooterButtonPressed = false;
 		
 		//Assign drive motor controllers
->>>>>>> origin/master
 		/*
 		leftDrive1 = new VictorSP(0);
 		leftDrive2 = new VictorSP(1);
