@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.DigitalInput;
 import com.ctre.CANTalon;
+import edu.wpi.first.wpilibj.TalonSRX;
 
 
 /**
@@ -60,7 +61,7 @@ public class Robot extends IterativeRobot {
 	Encoder leftDriveEncoder, rightDriveEncoder;
 	
 	//Talons
-	CANTalon shooterMotor1,shooterMotor2,shooterMotor3;
+	TalonSRX shooterMotor1,shooterMotor2,shooterMotor3;
 	
 	//drive function
 	RobotDrive drivetrain;
