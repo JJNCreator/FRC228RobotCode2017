@@ -59,7 +59,6 @@ public class Robot extends IterativeRobot {
 	Solenoid leftShifter, rightShifter;
 	
 	//Talons
-	TalonSRX shooterMotor1,shooterMotor2,shooterMotor3;
 	
 	boolean shooterButtonPressed;
 		
@@ -81,6 +80,7 @@ public class Robot extends IterativeRobot {
 	
 	//shooter controllers
 	//***insert Talon code here***
+	TalonSRX shooterMotor1,shooterMotor2,shooterMotor3;
 	//sensors
 	//***insert sensor code here***
 	
