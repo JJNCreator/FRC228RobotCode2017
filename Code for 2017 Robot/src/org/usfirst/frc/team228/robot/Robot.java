@@ -70,8 +70,8 @@ public class Robot extends IterativeRobot {
 	
 	//gates (human-load, dumper)
 	Solenoid HLGate, dumperGate;
-	boolean HLGatePrev; //records state of Y button from last iteration
-	boolean dumperGatePrev; //records state of right bumper from last iteration
+	boolean dumperButtonState; //when true, will open the dumper gate
+	boolean dumperButtonPrev; //records state of right bumper from last iteration
 	
 	//shooter controllers
 	//***insert Talon code here***
@@ -152,8 +152,8 @@ public class Robot extends IterativeRobot {
 		//gates (human load, dumper)
 		HLGate = new Solenoid(5);
 		dumperGate = new Solenoid(6);
-		HLGatePrev = false; //set left bumper "previous" state to false
-		dumperGatePrev = false; //set Y button "previous" state to false
+		dumperButtonState = false;
+		dumperButtonPrev = false;
 		
 		//Assign hanger motor controllers
 		hangingWinch = new VictorSP(6);
@@ -328,10 +328,8 @@ public class Robot extends IterativeRobot {
 		intakeBalls(operatorController.getRawAxis(2)); //left trigger
 		//ball feeding
 		feedBalls(operatorController.getRawAxis(1)); //left joystick y axis
-		//dumper
-			//toggle dumperGate on/off (open/closed) (no shoot/shoot) with right bumper
-			//default off
-				//dumperGate = toggle(operatorController.getRawButton(6));
+		//dumperGate toggle with right bumper (6) (on/open/shoot)/(DEFAULT: off/closed/no shoot)
+		dumperGateControl(operatorController.getRawButton(6));
 		//gear mechanism
 			//toggle gearRotator on/off (down/up) with A
 			//default off
@@ -413,11 +411,42 @@ public class Robot extends IterativeRobot {
 		//if you need to invert this, also invert the hangFFValue constant above
 		hangingWinch.set(hangingSpeed);
 	}
+	/**
+	 * This function controls the dumper gate using the right bumper
+	 * @param dumperButton
+	 */
+	
+	public void dumperGateControl(boolean dumperButton)
+	{
+		//if the button is pressed, and if it changed state
+		if (dumperButton && dumperButton != dumperButtonPrev)
+		{ 
+			//toggle the state of button
+			dumperButtonState = !dumperButtonState;
+		}
+		//now that check is complete, store value of dumperButton for next iteration of loop
+		dumperButtonPrev = dumperButton;
+
+		if (dumperButtonState)
+		{
+			//dumperGate open/no shoot state
+			dumperGate.set(true);
+		}
+		else
+		{
+			//dumperGate closed/shoot state
+			dumperGate.set(false);
+		}
+	}
 	
 	/**
 	 * This is an example method for toggling when you press a button
 	 * 
-	 * It should take the the value of a button
+	 * It should take the the value of whatever button you want to use
+	 * and it does the thing with the mechanism.
+	 * 
+	 * to call this method:
+	 * exampleMechanismControl(operatorController.getZButton());
 	 */
 	/*
 	public void exampleMechanismControl(boolean exampleButton)
