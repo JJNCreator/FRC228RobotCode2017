@@ -349,12 +349,12 @@ public class Robot extends IterativeRobot {
 	 * This function handles the shooter motors on the 2017 robot.  
 	 * 
 	 */
-	public void shooters(boolean button) {
-	if(button && button != shooterButtonPressed) {
+	public void shooters(boolean shooterButton) {
+	if(shooterButton && shooterButton != shooterButtonPressed) {
 		shooterButtonPressed = !shooterButtonPressed;
 	}
 	
-	shooterButtonPressed = button;
+	shooterButtonPressed = shooterButton;
 	if(shooterButtonPressed) {
 		shooterMotor1.set(1.0);
 		shooterMotor2.set(1.0);
