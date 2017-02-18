@@ -177,53 +177,6 @@ public class Robot extends IterativeRobot {
 			break;
 		}
 	}
-	
-	/**
-	 * Jake's Autonomous Test - 2/11/17
-	 */
-	/*public void CustomAuto() {
-		while(inAuto == true) { //While the robot is in auto mode
-			
-			//Have all drive motors go forward
-			leftDrive1.setSpeed(1f);
-			leftDrive2.setSpeed(1f);
-			rightDrive1.setSpeed(-1f);
-			rightDrive2.setSpeed(-1f);
-			
-			
-			//Delay for two seconds
-			Timer.delay(2f);
-			
-			//Resets all four drive motors
-			//ResetAllMotors(); //motors don't need to be reset here
-			
-			
-			//Have all drive motors go backward
-			leftDrive1.setSpeed(-1f);
-			leftDrive2.setSpeed(-1f);
-			rightDrive1.setSpeed(1f);
-			rightDrive2.setSpeed(1f);
-			
-			
-			//Reset all four motors again
-			ResetAllMotors();
-			
-			Timer.delay(0.5f);
-			
-			inAuto = false;
-		}
-	}
-	
-	//Commented below function out because arcadeDrive() or tankDrive() can do this same thing
-	//it also isn't accurate - it only zeroes the drive motors
-	private void ResetAllMotors() {
-		leftDrive1.setSpeed(0.0f);
-		leftDrive2.setSpeed(0.0f);
-		rightDrive1.setSpeed(0.0f);
-		rightDrive2.setSpeed(0.0f);
-
-	}*/
-	
 	/**Haley and Chris Auto Test
 	 * designed to be identical in behavior to CustomAuto 
 	 * but written in a more robust way as an example for programming team
