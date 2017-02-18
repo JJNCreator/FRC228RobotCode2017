@@ -35,12 +35,6 @@ public class Robot extends IterativeRobot {
 	//autonomous selector
 	SendableChooser autoChooser;
 	
-	//Checks if auto is on
-	boolean inAuto; //removed "= true", because it shouldn't default to true
-	
-	//Count time elapsed while in autonomous
-	//Timer autoTimer;
-	
 	//DRIVE MODE SELECTION
 	//user's drive mode selection
 	String driveMode;
@@ -54,10 +48,13 @@ public class Robot extends IterativeRobot {
 	
 	//compressor
 	Compressor compressor;
+	
 	//drive motor controllers
 	VictorSP leftDrive1, leftDrive2, rightDrive1, rightDrive2;
 	//encoders
 	Encoder leftDriveEncoder, rightDriveEncoder;
+	//pneumatics (shifters)
+	Solenoid leftShifter, rightShifter;
 	
 	//Talons
 	CANTalon shooterMotor1,shooterMotor2,shooterMotor3;
@@ -70,8 +67,12 @@ public class Robot extends IterativeRobot {
 	//ball manipulation 
 	//belt motor controllers
 	VictorSP intakeBelt, feederBelt;
-	//pneumatics
-	//***insert pneumatic code here***
+	
+	//gates (human-load, dumper)
+	Solenoid HLGate, dumperGate;
+	boolean HLGatePrev; //records state of Y button from last iteration
+	boolean dumperGatePrev; //records state of right bumper from last iteration
+	
 	//shooter controllers
 	//***insert Talon code here***
 	//sensors
@@ -79,7 +80,7 @@ public class Robot extends IterativeRobot {
 	
 	//gear manipulation
 	//pneumatics
-	//***insert pneumatic code here***
+	Solenoid leftPincher, rightPincher, gearRotator;
 	//sensors
 	DigitalInput gearDetectionLimitSwitch; //not currently initialized
 	
@@ -88,6 +89,16 @@ public class Robot extends IterativeRobot {
 	//hanging variables
 	boolean hangFeedForward; //when true, will apply feed forward value to hanger 
 	boolean hangButtonPrev; //records state of B button from last iteration
+	
+	//Checks if auto is on
+	boolean inAuto; //removed "= true", because it shouldn't default to true
+	
+	//Count time elapsed while in autonomous
+	//Timer autoTimer;
+	
+	//example for toggling buttons
+	//boolean exampleButtonState; //when true, will do the thing on the robot 
+	//boolean exampleButtonPrev; //records state of physical button from last iteration
 	
 	/**
 	 * This function is run when the robot is first started up and should be
@@ -107,7 +118,10 @@ public class Robot extends IterativeRobot {
 		driveChooser.addObject("GTA", GTAMode);
 		SmartDashboard.putData("Drive Choices", driveChooser);
 		
-		//Assign drive motor controllers
+		//Assign compressor
+		compressor = new Compressor();
+		
+		//Assign drive motor controllers 2017 ROBOT:
 		/*
 		leftDrive1 = new VictorSP(0);
 		leftDrive2 = new VictorSP(1);
@@ -116,17 +130,30 @@ public class Robot extends IterativeRobot {
 		*/
 		
 		//THIS IS FOR THE 2016 ROBOT ONLY:
-		//COMMENT THIS OUT FOR THE NEW ROBOT
+		//COMMENT THIS OUT AND USE ABOVE FOR THE NEW ROBOT
 		leftDrive1 = new VictorSP(0);
 		leftDrive2 = new VictorSP(1);
 		rightDrive1 = new VictorSP(3);
 		rightDrive2 = new VictorSP(4);
 		//^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 		
-		
 		//Assign ball motor controllers
-		intakeBelt = new VictorSP(7); //fuel intake //4
-		feederBelt = new VictorSP(8); //shooter feed belt //5
+		intakeBelt = new VictorSP(7); //fuel intake //4 FOR 2017 ROBOT
+		feederBelt = new VictorSP(8); //shooter feed belt //5 FOR 2017 ROBOT
+		
+		//Assign solenoids
+		//drivetrain shifters
+		leftShifter = new Solenoid(0);
+		rightShifter = new Solenoid(1);
+		//gear manipulators
+		leftPincher = new Solenoid(2);
+		rightPincher = new Solenoid(3);
+		gearRotator = new Solenoid(4);
+		//gates (human load, dumper)
+		HLGate = new Solenoid(5);
+		dumperGate = new Solenoid(6);
+		HLGatePrev = false; //set left bumper "previous" state to false
+		dumperGatePrev = false; //set Y button "previous" state to false
 		
 		//Assign hanger motor controllers
 		hangingWinch = new VictorSP(6);
@@ -139,6 +166,10 @@ public class Robot extends IterativeRobot {
 		//Assign XboxControllers
 		driverController = new XboxController(0);
 		operatorController = new XboxController(1);
+		
+		//example for toggling buttons, set to false
+		//exampleButtonState = false;
+		//exampleButtonPrev = false;
 		
 	}
 	
@@ -292,12 +323,24 @@ public class Robot extends IterativeRobot {
 		
 		//COMMENT OUT CODE BELOW THIS IF RUNNING ON THE 2016 ROBOT
 		
-		//operator controls
+		//OPERATOR CONTROLS
 		//ball intake
 		intakeBalls(operatorController.getRawAxis(2)); //left trigger
 		//ball feeding
 		feedBalls(operatorController.getRawAxis(1)); //left joystick y axis
-		
+		//dumper
+			//toggle dumperGate on/off (open/closed) (no shoot/shoot) with right bumper
+			//default off
+				//dumperGate = toggle(operatorController.getRawButton(6));
+		//gear mechanism
+			//toggle gearRotator on/off (down/up) with A
+			//default off
+		//gear grip
+			//toggle both leftPincher and rightPincher with B (K Forward = closed, K Reverse = open)
+			//default ?
+		//human load gate
+			//toggle HLGate on/off (open/closed) with Y
+			//default closed
 		//hanging
 		//right trigger passes for throttle value, X button toggles feed-forward on and off
 		hangingControl(operatorController.getRawAxis(3), operatorController.getXButton());
@@ -370,5 +413,35 @@ public class Robot extends IterativeRobot {
 		//if you need to invert this, also invert the hangFFValue constant above
 		hangingWinch.set(hangingSpeed);
 	}
+	
+	/**
+	 * This is an example method for toggling when you press a button
+	 * 
+	 * It should take the the value of a button
+	 */
+	/*
+	public void exampleMechanismControl(boolean exampleButton)
+	{
+		//if the button is pressed, and if it changed state
+		if (exampleButton && exampleButton != exampleButtonPrev)
+		{ 
+			//toggle the state of button
+			exampleButtonState = !exampleButtonState;
+		}
+		//now that check is complete, store value of exampleButton for next iteration of loop
+		exampleButtonPrev = exampleButton;
+
+		if (exampleButtonState)
+		{
+			//mechanism ON state
+			exampleMechanism.set(true);
+		}
+		else
+		{
+			//mechanism OFF state
+			exampleMechanism.set(false);
+		}
+	}
+	*/
 
 }
