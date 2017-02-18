@@ -2,6 +2,7 @@ package org.usfirst.frc.team228.robot;
 
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.Encoder;
+import edu.wpi.first.wpilibj.GenericHID.Hand;
 import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.XboxController;
@@ -62,7 +63,7 @@ public class Robot extends IterativeRobot {
 	
 	//Talons
 	TalonSRX shooterMotor1,shooterMotor2,shooterMotor3;
-	
+		
 	//drive function
 	RobotDrive drivetrain;
 	//controllers: driver: driving, operator: functions (like intake and shooter)
@@ -132,7 +133,7 @@ public class Robot extends IterativeRobot {
 		//Assign hanger motor controllers
 		hangingWinch = new VictorSP(6);
 		hangFeedForward = false;
-		hangButtonPrev = false; 
+		hangButtonPrev = false;
 		
 		//Assign Robot Drive
 		drivetrain = new RobotDrive(leftDrive1, leftDrive2, rightDrive1, rightDrive2);
@@ -297,7 +298,9 @@ public class Robot extends IterativeRobot {
 		//ball intake
 		intakeBalls(operatorController.getRawAxis(2)); //left trigger
 		//ball feeding
-		feedBalls(operatorController.getRawAxis(1)); //left joystick y axis
+		feedBalls(operatorController.getRawAxis(1)); //left joystick y axis		
+		//Shooter
+		shooters(operatorController.getRawButton(5));
 		
 		//hanging
 		//right trigger passes for throttle value, X button toggles feed-forward on and off
@@ -335,6 +338,22 @@ public class Robot extends IterativeRobot {
 		//since intake and feeder gearboxes run opposite, pass the SAME value to both
 		intakeBelt.set(intakeSpeed);
 		feederBelt.set(-1 * intakeSpeed);
+	}
+	/**
+	 * This function handles the shooter motors on the 2017 robot.  
+	 * 
+	 */
+	public void shooters(boolean button) {
+	if(button) {
+		shooterMotor1.set(1.0);
+		shooterMotor2.set(1.0);
+		shooterMotor3.set(1.0);
+	}
+	else {
+		shooterMotor1.set(0.0);
+		shooterMotor2.set(0.0);
+		shooterMotor3.set(0.0);
+		}
 	}
 	
 	/** 
