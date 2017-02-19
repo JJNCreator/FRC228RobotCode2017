@@ -50,7 +50,8 @@ public class Robot extends IterativeRobot
 	String driveMode;
 	//int driveTrainId;
 	//drive mode selector
-	SendableChooser<String> driveChooser;
+	//SendableChooser<String> driveChooser; //old
+	SendableChooser driveChooser; //old
 	
 	//Compressor
 	Compressor compressor;
@@ -98,6 +99,9 @@ public class Robot extends IterativeRobot
 	TalonSRX shooterMotor1,shooterMotor2,shooterMotor3;
 	boolean shooterState;
 	boolean shooterButtonPrev;
+	//constant for shooter speed
+	double olShooterValue = 0.7; //no longer a constant //"open loop shooter value"
+	//double shooterValueCopy; //stores olShootervalue after the user inputs the constant
 	//sensors
 	//***insert sensor code here***
 	
@@ -126,19 +130,26 @@ public class Robot extends IterativeRobot
 	{
 	//Robot Init - Assign Everything
 		
-		//Assign Chooser for Autonomous programs
-		autoChooser = new SendableChooser<String>();
-		autoChooser.addDefault("Auto nothing", defaultAuto);
-		autoChooser.addObject("Auto custom", customAuto);
-		SmartDashboard.putData("Auto Choices", autoChooser);
+		//Display Info in SmartDashBoard
+			//Assign Chooser for Autonomous programs
+			//autoChooser = new SendableChooser<String>();
+			autoChooser = new SendableChooser();
+			autoChooser.addDefault("Auto nothing", defaultAuto);
+			autoChooser.addObject("Auto custom", customAuto);
+			SmartDashboard.putData("Auto Choices", autoChooser);
+	
+			//Assign Chooser for Teleop Drive Mode
+			//driveChooser = new SendableChooser<String>();
+			driveChooser = new SendableChooser();
+			driveChooser.addDefault("Tank Drive", tankMode); //we need to see how these work
+			driveChooser.addObject("Arcade Drive", arcadeMode);
+			driveChooser.addObject("GTA", GTAMode);
+			SmartDashboard.putData("Drive Choices", driveChooser);
+			
+			//Shooter
+			//put shooter constant data
+			SmartDashboard.putNumber("Shooter constant", olShooterValue);
 
-		//Assign Chooser for Teleop Drive Mode
-		driveChooser = new SendableChooser<String>();
-		driveChooser.addDefault("Tank Drive", tankMode); //we need to see how these work
-		driveChooser.addObject("Arcade Drive", arcadeMode);
-		driveChooser.addObject("GTA", GTAMode);
-		SmartDashboard.putData("Drive Choices", driveChooser);
-		
 		//Assign Compressor
 		compressor = new Compressor();
 		
@@ -295,6 +306,11 @@ public class Robot extends IterativeRobot
 	public void teleopPeriodic()
 	{
 		//don't put print statements in periodic; they would print repeatedly
+		
+		//SmartDashboard
+
+		//display the shooter constant (olShooterValue)
+		//SmartDashboard.putNumber("Shooter constant copy", olShooterValue);
 		
 		//DRIVER CONTROLS
 		//Value for the GTA Mode arcade function and SmartDashboard data
@@ -504,7 +520,15 @@ public class Robot extends IterativeRobot
 	 */
 	public void shooterControl(boolean shooterButton, boolean isPID)
 	{
-		double olShooterValue = 0.7; //no longer a constant	
+		/*
+		//get user input for constant
+		SmartDashboard.getNumber("Shooter constant", olShooterValue);
+		double shooterValueCopy = olShooterValue; //stores olShootervalue after the user inputs the constant
+		//display the shooter constant (newShooterValue)
+		SmartDashboard.putNumber("Shooter constant copy", shooterValueCopy);
+		*/
+		//get user input for constant, assign to olShooterValue
+		olShooterValue = SmartDashboard.getNumber("Shooter constant", olShooterValue);
 			
 		if(shooterButton && shooterButton != shooterButtonPrev)
 		{
