@@ -100,8 +100,9 @@ public class Robot extends IterativeRobot
 	boolean shooterState;
 	boolean shooterButtonPrev;
 	//constant for shooter speed
-	double olShooterValue = 0.7; //no longer a constant //"open loop shooter value"
-	//double shooterValueCopy; //stores olShootervalue after the user inputs the constant
+	double OLShooterValue; //no longer a constant //"open loop shooter value"
+	//make a chooser for choosing between Open Loop and PID
+	//SendableChooser shooterChooser;
 	//sensors
 	//***insert sensor code here***
 	
@@ -116,7 +117,7 @@ public class Robot extends IterativeRobot
 	boolean inAuto; //removed "= true", because it shouldn't default to true
 	
 	//Counts time elapsed while in autonomous
-	//Timer autoTimer;
+	Timer autoTimer;
 	
 	//example for toggling buttons
 	//boolean exampleState; //when true, will do the thing on the robot 
@@ -128,28 +129,24 @@ public class Robot extends IterativeRobot
 	 */
 	public void robotInit()
 	{
-	//Robot Init - Assign Everything
+	//Robot Init - Assign Everything, put things on SmartDashboard
+		autoTimer = new Timer();
 		
-		//Display Info in SmartDashBoard
-			//Assign Chooser for Autonomous programs
-			//autoChooser = new SendableChooser<String>();
-			autoChooser = new SendableChooser();
-			autoChooser.addDefault("Auto nothing", defaultAuto);
-			autoChooser.addObject("Auto custom", customAuto);
-			SmartDashboard.putData("Auto Choices", autoChooser);
-	
-			//Assign Chooser for Teleop Drive Mode
-			//driveChooser = new SendableChooser<String>();
-			driveChooser = new SendableChooser();
-			driveChooser.addDefault("Tank Drive", tankMode); //we need to see how these work
-			driveChooser.addObject("Arcade Drive", arcadeMode);
-			driveChooser.addObject("GTA", GTAMode);
-			SmartDashboard.putData("Drive Choices", driveChooser);
-			
-			//Shooter
-			//put shooter constant data
-			SmartDashboard.putNumber("Shooter constant", olShooterValue);
+		//Assign Chooser for Autonomous programs
+		//autoChooser = new SendableChooser<String>();
+		autoChooser = new SendableChooser();
+		autoChooser.addDefault("Auto nothing", defaultAuto);
+		autoChooser.addObject("Auto custom", customAuto);
+		SmartDashboard.putData("Auto Choices", autoChooser);
 
+		//Assign Chooser for Teleop Drive Mode
+		//driveChooser = new SendableChooser<String>();
+		driveChooser = new SendableChooser();
+		driveChooser.addDefault("Tank Drive", tankMode); //we need to see how these work
+		driveChooser.addObject("Arcade Drive", arcadeMode);
+		driveChooser.addObject("GTA", GTAMode);
+		SmartDashboard.putData("Drive Choices", driveChooser);
+		
 		//Assign Compressor
 		compressor = new Compressor();
 		
@@ -181,11 +178,11 @@ public class Robot extends IterativeRobot
 		operatorController = new XboxController(1);
 		
 		//Gear Manipulation
-		//assign pincher
+		//Assign Pincher
 		pincher = new DoubleSolenoid(2,3);
 		pincherState = false;
 		pincherButtonPrev = false;
-		//assign rotator
+		//Assign Rotator
 		gearRotator = new Solenoid(4);
 		gearRotatorState = false;
 		gearRotatorButtonPrev = false;
@@ -211,10 +208,18 @@ public class Robot extends IterativeRobot
 		dumperState = false;
 		dumperButtonPrev = false;
 		
+		//Shooter 		//organize shooter code
 		//Assign Shooter motor controllers
-		//organize shooter code
 		shooterButtonPrev = false;
 		shooterState = false;
+		//put shooter constant data
+		SmartDashboard.putNumber("Shooter constant", OLShooterValue);
+		//get user input for constant, assign to OLShooterValue
+		OLShooterValue = SmartDashboard.getNumber("Shooter constant", OLShooterValue);
+		//assign chooser between OL and PID
+		//shooterChooser = new SendableChooser();
+		SmartDashboard.putBoolean("Shooter PID on", false);
+		//getboolean in teleop periodic
 		
 		//Assign Hanging motor controllers
 		hangingWinch = new VictorSP(6);
@@ -239,6 +244,9 @@ public class Robot extends IterativeRobot
 		autoSelected = (String) autoChooser.getSelected();
 		//print autonomous selection
 		System.out.println("Auto selected: " + autoSelected);
+		
+		autoTimer.reset();
+		autoTimer.start();
 		
 		//inAuto = true;
 	}
@@ -273,17 +281,19 @@ public class Robot extends IterativeRobot
 		//4s: stop
 		
 		//at 0s: drive forward for 2 seconds
-		if (Timer.getMatchTime() < 2)
+		//if (Timer.getMatchTime() < 2)
+		if (autoTimer.get() < 2)
 		{
 			drivetrain.arcadeDrive(1.0, 0.0);
 		}
 		//at 2s: drive backwards for 2 seconds
-		else if (Timer.getMatchTime() < 4)
+		//else if (Timer.getMatchTime() < 4)
+		else if (/*autoTimer.get() > 2 && */autoTimer.get() < 4)
 		{
-			drivetrain.arcadeDrive(-1.0, 0.0);
+			drivetrain.arcadeDrive(0.5, 0.0);
 		}
 		//at 4s: stop
-		else
+		else //(autoTimer.get() > 4)
 		{
 			drivetrain.arcadeDrive(0.0, 0.0);
 		}
@@ -307,10 +317,8 @@ public class Robot extends IterativeRobot
 	{
 		//don't put print statements in periodic; they would print repeatedly
 		
-		//SmartDashboard
-
-		//display the shooter constant (olShooterValue)
-		//SmartDashboard.putNumber("Shooter constant copy", olShooterValue);
+		//display the shooter constant (OLShooterValue)
+		//SmartDashboard.putNumber("Shooter constant copy", OLShooterValue);
 		
 		//DRIVER CONTROLS
 		//Value for the GTA Mode arcade function and SmartDashboard data
@@ -364,7 +372,7 @@ public class Robot extends IterativeRobot
 			dumperGateControl(operatorController.getRawButton(6));
 
 			//Shooter: spin up/down toggle with left bumper
-			shooterControl(operatorController.getRawButton(5), false); //set to true for PID
+			shooterControl(operatorController.getRawButton(5), SmartDashboard.getBoolean("Shooter PID on", false)); //set to true for PID
 
 			//Hanging: right trigger passes for throttle value, X button toggles feed-forward on and off
 			hangingControl(operatorController.getRawAxis(3), operatorController.getXButton());
@@ -520,15 +528,8 @@ public class Robot extends IterativeRobot
 	 */
 	public void shooterControl(boolean shooterButton, boolean isPID)
 	{
-		/*
-		//get user input for constant
-		SmartDashboard.getNumber("Shooter constant", olShooterValue);
-		double shooterValueCopy = olShooterValue; //stores olShootervalue after the user inputs the constant
-		//display the shooter constant (newShooterValue)
-		SmartDashboard.putNumber("Shooter constant copy", shooterValueCopy);
-		*/
-		//get user input for constant, assign to olShooterValue
-		olShooterValue = SmartDashboard.getNumber("Shooter constant", olShooterValue);
+		//get user input for constant, assign to OLShooterValue
+		OLShooterValue = SmartDashboard.getNumber("Shooter constant", OLShooterValue);
 			
 		if(shooterButton && shooterButton != shooterButtonPrev)
 		{
@@ -540,9 +541,9 @@ public class Robot extends IterativeRobot
 		{
 			if(shooterState)
 			{
-				shooterMotor1.set(olShooterValue);
-				shooterMotor2.set(olShooterValue);
-				shooterMotor3.set(olShooterValue);
+				shooterMotor1.set(OLShooterValue);
+				shooterMotor2.set(OLShooterValue);
+				shooterMotor3.set(OLShooterValue);
 			}
 			else
 			{
