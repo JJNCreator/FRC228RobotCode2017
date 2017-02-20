@@ -3,10 +3,10 @@ package org.usfirst.frc.team228.robot;
 import com.ctre.CANTalon; 
 import com.ctre.CANTalon.FeedbackDevice;
 import com.ctre.CANTalon.TalonControlMode;
-
+import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
-import edu.wpi.first.wpilibj.DigitalInput;
+//import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Encoder;
 //import edu.wpi.first.wpilibj.GenericHID.Hand; //probably don't need
 import edu.wpi.first.wpilibj.IterativeRobot;
@@ -15,7 +15,7 @@ import edu.wpi.first.wpilibj.RobotDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.Solenoid;
-import edu.wpi.first.wpilibj.TalonSRX;
+//import edu.wpi.first.wpilibj.TalonSRX;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.VictorSP; //not victor like we thought
 import edu.wpi.first.wpilibj.XboxController;
@@ -38,6 +38,7 @@ public class Robot extends IterativeRobot
 	//Auto Selection
 	final String defaultAuto = "Do nothing";
 	final String customAuto = "Custom Auto";
+	final String gyroAuto = "Gyro Test Auto";
 	//user's autonomous selection
 	String autoSelected;
 	//autonomous selector
@@ -58,6 +59,10 @@ public class Robot extends IterativeRobot
 	
 	//Compressor
 	Compressor compressor;
+	
+	//Gyro
+	ADXRS450_Gyro robotGyro;
+	boolean calGyro;
 	
 	//Drivetrain
 	//drive motor controllers
@@ -139,7 +144,7 @@ public class Robot extends IterativeRobot
 		//SmartDashboard.putBoolean("Shooter PID on", false);
 		
 		//default RPM, F, P, I, D values, write these in once known
-		ShooterRPM = 4000;
+		ShooterTargetRPM = 4000;
 		ShooterF = 0;
 		ShooterP = 0;
 		ShooterI = 0;
@@ -168,6 +173,7 @@ public class Robot extends IterativeRobot
 		//Put Autonomous Chooser
 		autoChooser.addDefault("Auto nothing", defaultAuto);
 		autoChooser.addObject("Auto custom", customAuto);
+		autoChooser.addObject("Gyro Test Auto", gyroAuto);
 		SmartDashboard.putData("Auto Choices", autoChooser);
 
 		//Put Teleop Drive Mode Chooser
@@ -181,6 +187,10 @@ public class Robot extends IterativeRobot
 		
 		//Assign Compressor
 		compressor = new Compressor();
+		
+		//Assign Gyro
+		robotGyro = new ADXRS450_Gyro();
+		SmartDashboard.putBoolean("Gyro Calibrate", true);
 		
 		//Drivetrain
 		//Assign drive motor controllers
@@ -291,6 +301,7 @@ public class Robot extends IterativeRobot
 		//OLShooterValue = SmartDashboard.getNumber("Shooter constant", OLShooterValue);
 		SmartDashboard.putData("Auto Choices", autoChooser);
 		SmartDashboard.putData("Drive Choices", driveChooser);
+		calGyro = SmartDashboard.getBoolean("Gyro Calibrate", true);
 
 	}
 	
@@ -304,9 +315,11 @@ public class Robot extends IterativeRobot
 	public void autonomousInit()
 	{
 		//get Autonomous selection
-		autoSelected = (String) autoChooser.getSelected();
+		autoSelected = autoChooser.getSelected();
 		//print autonomous selection
 		System.out.println("Auto selected: " + autoSelected);
+		
+		robotGyro.reset();
 		
 		autoTimer.reset();
 		autoTimer.start();
@@ -325,6 +338,9 @@ public class Robot extends IterativeRobot
 			//CustomAuto(); //commenting out because we're rewriting this function
 			testAuto();
 			//Put custom auto code here   
+			break;
+		case gyroAuto:
+			gyroTestAuto();
 			break;
 		case defaultAuto:
 		default:
@@ -362,6 +378,19 @@ public class Robot extends IterativeRobot
 		{
 			drivetrain.arcadeDrive(0.0, 0.0);
 		}
+	}
+	
+	/**
+	 * This method checks the angle on the gyro
+	 */
+	public void gyroTestAuto()
+	{
+		//turn off drivetrain
+		drivetrain.arcadeDrive(0.0, 0.0);
+		//check gyro
+		System.out.println(robotGyro.getAngle());
+		//wait .1s
+		Timer.delay(0.1);
 	}
 	
 	/**
@@ -446,11 +475,16 @@ public class Robot extends IterativeRobot
 	}
 	
 	/**
-	 * This function is called periodically during test mode
+	 * This function is called periodically during disabled mode
 	 */
-	public void testPeriodic()
+	public void disabledPeriodic()
 	{
-		
+		//if "Gyro Calibrate" is checked
+		if (calGyro)
+		{
+			//calibrate the gyro
+			robotGyro.calibrate();
+		}
 	}
 
 	/**
@@ -616,7 +650,7 @@ public class Robot extends IterativeRobot
 				
 				//double shooterTargetRPM = 4000.0; //now a global variable
 				shooterMotor1.changeControlMode(TalonControlMode.Speed);
-				shooterMotor1.set(shooterTargetRPM * 3.625); //3.625 is the gear ratio between 775 and output
+				shooterMotor1.set(ShooterTargetRPM * 3.625); //3.625 is the gear ratio between 775 and output
 				shooterMotor1.set(ShooterF);
 				shooterMotor1.set(ShooterP);
 				shooterMotor1.set(ShooterI);
