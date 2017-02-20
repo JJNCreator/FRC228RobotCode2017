@@ -38,8 +38,8 @@ public class Robot extends IterativeRobot
 	//user's autonomous selection
 	String autoSelected;
 	//autonomous selector
-	//SendableChooser<String> autoChooser; //new
-	SendableChooser autoChooser; //old
+	SendableChooser<String> autoChooser; //new
+	//SendableChooser autoChooser; //old
 	
 	//Teleop Drive Mode Selection
 	//Strings for each particular mode
@@ -50,8 +50,8 @@ public class Robot extends IterativeRobot
 	String driveMode;
 	//int driveTrainId;
 	//drive mode selector
-	//SendableChooser<String> driveChooser; //old
-	SendableChooser driveChooser; //old
+	SendableChooser<String> driveChooser; //old
+	//SendableChooser driveChooser; //old
 	
 	//Compressor
 	Compressor compressor;
@@ -68,7 +68,7 @@ public class Robot extends IterativeRobot
 	RobotDrive drivetrain;
 	
 	//XBoxControllers: driver: driving, operator: functions (like intake and shooter)
-	XboxController driverController,operatorController;
+	XboxController driverController, operatorController;
 
 	//Gear Manipulation
 	//pincher
@@ -100,9 +100,7 @@ public class Robot extends IterativeRobot
 	boolean shooterState;
 	boolean shooterButtonPrev;
 	//constant for shooter speed
-	double OLShooterValue; //no longer a constant //"open loop shooter value"
-	//make a chooser for choosing between Open Loop and PID
-	//SendableChooser shooterChooser;
+	double OLShooterValue = 0.7; //no longer a constant //"open loop shooter value"
 	//sensors
 	//***insert sensor code here***
 	
@@ -129,23 +127,36 @@ public class Robot extends IterativeRobot
 	 */
 	public void robotInit()
 	{
-	//Robot Init - Assign Everything, put things on SmartDashboard
-		autoTimer = new Timer();
+	//Robot Init - Put Things on SmartDashboard and Assign Everything
+		
+		//Shooter
+		//put shooter constant data
+		//SmartDashboard.putNumber("Shooter constant", OLShooterValue);
+		//get user input for constant, assign to OLShooterValue
+		//puts a boolean (which becomes checkbox) on SmartDashboard
+		//SmartDashboard.putBoolean("Shooter PID on", false);
 		
 		//Assign Chooser for Autonomous programs
-		//autoChooser = new SendableChooser<String>();
-		autoChooser = new SendableChooser();
+		autoChooser = new SendableChooser<String>();
+		//autoChooser = new SendableChooser();
+				
+		//Assign Chooser for Teleop Drive Mode
+		driveChooser = new SendableChooser<String>();
+		//driveChooser = new SendableChooser();
+		
+		//Put Autonomous Chooser
 		autoChooser.addDefault("Auto nothing", defaultAuto);
 		autoChooser.addObject("Auto custom", customAuto);
 		SmartDashboard.putData("Auto Choices", autoChooser);
 
-		//Assign Chooser for Teleop Drive Mode
-		//driveChooser = new SendableChooser<String>();
-		driveChooser = new SendableChooser();
-		driveChooser.addDefault("Tank Drive", tankMode); //we need to see how these work
+		//Put Teleop Drive Mode Chooser
+		driveChooser.addDefault("Tank Drive", tankMode); //consider simplifying this process
 		driveChooser.addObject("Arcade Drive", arcadeMode);
-		driveChooser.addObject("GTA", GTAMode);
+		driveChooser.addObject("GTA Drive", GTAMode);
 		SmartDashboard.putData("Drive Choices", driveChooser);
+
+		//Autonomous mode timer
+		autoTimer = new Timer();
 		
 		//Assign Compressor
 		compressor = new Compressor();
@@ -208,18 +219,10 @@ public class Robot extends IterativeRobot
 		dumperState = false;
 		dumperButtonPrev = false;
 		
-		//Shooter 		//organize shooter code
+		//Shooter
 		//Assign Shooter motor controllers
 		shooterButtonPrev = false;
 		shooterState = false;
-		//put shooter constant data
-		SmartDashboard.putNumber("Shooter constant", OLShooterValue);
-		//get user input for constant, assign to OLShooterValue
-		OLShooterValue = SmartDashboard.getNumber("Shooter constant", OLShooterValue);
-		//assign chooser between OL and PID
-		//shooterChooser = new SendableChooser();
-		SmartDashboard.putBoolean("Shooter PID on", false);
-		//getboolean in teleop periodic
 		
 		//Assign Hanging motor controllers
 		hangingWinch = new VictorSP(6);
@@ -229,6 +232,20 @@ public class Robot extends IterativeRobot
 		//set example mechanism and button statuses to false
 		//exampleState = false;
 		//exampleButtonPrev = false;
+	}
+	
+	/**
+	 * This function is called each time a new packet is received from the driver station
+	 * (approximately every 20ms).
+	 * Periodic code for all robot modes should go here.
+	 */
+	public void robotPeriodic()
+	{
+		//Get shooter constant from user on SmartDashboard
+		//OLShooterValue = SmartDashboard.getNumber("Shooter constant", OLShooterValue);
+		SmartDashboard.putData("Auto Choices", autoChooser);
+		SmartDashboard.putData("Drive Choices", driveChooser);
+
 	}
 	
 	/**
@@ -265,6 +282,7 @@ public class Robot extends IterativeRobot
 			break;
 		case defaultAuto:
 		default:
+			drivetrain.arcadeDrive(0.0, 0.0); //prevents watchdog error
 			//Put default auto code here
 			break;
 		}
@@ -276,6 +294,7 @@ public class Robot extends IterativeRobot
 	
 	public void testAuto()
 	{
+		//Timer.getMatchTime() wasn't working, is now autoTimer.get()
 		//0s: forward
 		//2s: backward
 		//4s: stop
@@ -337,6 +356,7 @@ public class Robot extends IterativeRobot
 			drivetrain.tankDrive(driverController, 1, driverController, 5);
 			break;
 		case GTAMode:
+		default:
 			combinedTriggerValue = (-1 * driverController.getRawAxis(2) + driverController.getRawAxis(3));
 			drivetrain.arcadeDrive(combinedTriggerValue, driverController.getRawAxis(0));
 			
