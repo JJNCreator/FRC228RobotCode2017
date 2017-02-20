@@ -1,6 +1,9 @@
 package org.usfirst.frc.team228.robot;
 
 import com.ctre.CANTalon; //we will use this later
+import com.ctre.CANTalon.FeedbackDevice;
+import com.ctre.CANTalon.TalonControlMode;
+
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.DigitalInput;
@@ -96,7 +99,7 @@ public class Robot extends IterativeRobot
 
 	//Shooter
 	//controllers (Talons)
-	TalonSRX shooterMotor1,shooterMotor2,shooterMotor3;
+	CANTalon shooterMotor1,shooterMotor2,shooterMotor3;
 	boolean shooterState;
 	boolean shooterButtonPrev;
 	//constant for shooter speed
@@ -135,6 +138,11 @@ public class Robot extends IterativeRobot
 		//get user input for constant, assign to OLShooterValue
 		//puts a boolean (which becomes checkbox) on SmartDashboard
 		//SmartDashboard.putBoolean("Shooter PID on", false);
+		//display F, P, I, and D
+		SmartDashboard.putNumber("Shooter F", shooterMotor1.getF());
+		SmartDashboard.putNumber("Shooter P", shooterMotor1.getP());
+		SmartDashboard.putNumber("Shooter I", shooterMotor1.getI());
+		SmartDashboard.putNumber("Shooter D", shooterMotor1.getD());
 		
 		//Assign Chooser for Autonomous programs
 		autoChooser = new SendableChooser<String>();
@@ -221,6 +229,31 @@ public class Robot extends IterativeRobot
 		
 		//Shooter
 		//Assign Shooter motor controllers
+		if (!is2016Robot)
+		{
+			shooterMotor1 = new CANTalon(1); //verify IDs
+			shooterMotor2 = new CANTalon(2); 
+			shooterMotor3 = new CANTalon(3);
+			
+			shooterMotor1.setFeedbackDevice(FeedbackDevice.QuadEncoder);
+			//set other Talons to follow - verify correct numbers for everything
+			shooterMotor2.changeControlMode(CANTalon.TalonControlMode.Follower);
+			shooterMotor2.set(shooterMotor1.getDeviceID());
+			shooterMotor3.changeControlMode(CANTalon.TalonControlMode.Follower);
+			shooterMotor3.set(shooterMotor1.getDeviceID());
+			
+			//set nominal and peak voltage, 12V means full (but only here!)
+			shooterMotor1.configNominalOutputVoltage(0.0, -0.0);
+			shooterMotor1.configPeakOutputVoltage(12.0, -12.0);
+			
+			//internet told me to put this here for now?
+			shooterMotor1.setProfile(0);
+			shooterMotor1.setF(0);
+			shooterMotor1.setP(0);
+			shooterMotor1.setI(0);
+			shooterMotor1.setD(0);
+		
+		}
 		shooterButtonPrev = false;
 		shooterState = false;
 		
@@ -557,20 +590,38 @@ public class Robot extends IterativeRobot
 		}
 		
 		shooterButtonPrev = shooterButton;
-		if (!isPID)
+		if (shooterState) //if the shooter has toggled on
 		{
-			if(shooterState)
+			if (isPID)
 			{
+				double shooterTargetSpeed = 4000.0; //4000 rpm
+				shooterMotor1.changeControlMode(TalonControlMode.Speed);
+				//speed setpoint multiplied by the gear ratio to get encoder speed
+				shooterMotor1.set(shooterTargetSpeed * 3.625); 
+				
+				//send data to smartdashboard
+				SmartDashboard.putNumber("Shooter Error", shooterMotor1.getClosedLoopError());
+				SmartDashboard.putNumber("Shooter Signal", shooterMotor1.getOutputVoltage() / shooterMotor1.getBusVoltage());
+				//not sure if output voltage needs to be divided by 12 or not
+				
+				//get user input for FPID and i have no idea what im doing
+				shooterMotor1.set(SmartDashboard.getNumber("Shooter F", shooterMotor1.getF()));
+				shooterMotor1.set(SmartDashboard.getNumber("Shooter P", shooterMotor1.getP()));
+				shooterMotor1.set(SmartDashboard.getNumber("Shooter I", shooterMotor1.getI()));
+				shooterMotor1.set(SmartDashboard.getNumber("Shooter D", shooterMotor1.getD()));
+			}
+			else //if pid is unchecked
+			{
+				//change talon to open-loop mode, set a value
+				shooterMotor1.changeControlMode(TalonControlMode.PercentVbus);
 				shooterMotor1.set(OLShooterValue);
-				shooterMotor2.set(OLShooterValue);
-				shooterMotor3.set(OLShooterValue);
 			}
-			else
-			{
-				shooterMotor1.set(0.0);
-				shooterMotor2.set(0.0);
-				shooterMotor3.set(0.0);
-			}
+		}
+		else
+		{
+			//change talon to open-loop mode, set to off
+			shooterMotor1.changeControlMode(TalonControlMode.PercentVbus);
+			shooterMotor1.set(0.0);
 		}
 	}
 	
