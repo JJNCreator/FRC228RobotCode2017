@@ -33,7 +33,7 @@ public class Robot extends IterativeRobot
 	
 	//ATTENTION!
 	//set to true for 2016 robot, false for either 2017 robot:
-	final boolean is2016Robot = true;
+	final boolean is2016Robot = false;
 	
 	//Auto Selection
 	final String defaultAuto = "Do nothing";
@@ -177,9 +177,9 @@ public class Robot extends IterativeRobot
 		SmartDashboard.putData("Auto Choices", autoChooser);
 
 		//Put Teleop Drive Mode Chooser
-		driveChooser.addDefault("Tank Drive", tankMode); //consider simplifying this process
+		driveChooser.addDefault("GTA Drive", GTAMode);
+		driveChooser.addObject("Tank Drive", tankMode); //consider simplifying this process
 		driveChooser.addObject("Arcade Drive", arcadeMode);
-		driveChooser.addObject("GTA Drive", GTAMode);
 		SmartDashboard.putData("Drive Choices", driveChooser);
 
 		//Autonomous mode timer
@@ -258,30 +258,31 @@ public class Robot extends IterativeRobot
 			shooterMotor2 = new CANTalon(2); 
 			shooterMotor3 = new CANTalon(3);
 			
-			shooterMotor1.setFeedbackDevice(FeedbackDevice.QuadEncoder);
+			shooterMotor3.setFeedbackDevice(FeedbackDevice.QuadEncoder);
 			//set other Talons to follow - verify correct numbers for everything
 			shooterMotor2.changeControlMode(CANTalon.TalonControlMode.Follower);
-			shooterMotor2.set(shooterMotor1.getDeviceID());
-			shooterMotor3.changeControlMode(CANTalon.TalonControlMode.Follower);
-			shooterMotor3.set(shooterMotor1.getDeviceID());
+			shooterMotor2.set(shooterMotor3.getDeviceID());
+			shooterMotor1.changeControlMode(CANTalon.TalonControlMode.Follower);
+			shooterMotor1.set(shooterMotor3.getDeviceID());
 			
 			//set nominal and peak voltage, 12V means full (but only here!)
-			shooterMotor1.configNominalOutputVoltage(0.0, -0.0);
-			shooterMotor1.configPeakOutputVoltage(12.0, -12.0);
+			shooterMotor3.configNominalOutputVoltage(0.0, -0.0);
+			shooterMotor3.configPeakOutputVoltage(12.0, -12.0);
 			
 			//internet told me to put this here for now?
-			shooterMotor1.setProfile(0);//what the fuck is this
-			shooterMotor1.setF(ShooterF);
-			shooterMotor1.setP(ShooterP);
-			shooterMotor1.setI(ShooterI);
-			shooterMotor1.setD(ShooterD); //the manual had these initialize to 0 but i wasn't sure
-		
+			shooterMotor3.setProfile(0);//what the fuck is this
+			shooterMotor3.setF(ShooterF);
+			shooterMotor3.setP(ShooterP);
+			shooterMotor3.setI(ShooterI);
+			shooterMotor3.setD(ShooterD); //the manual had these initialize to 0 but i wasn't sure
+			
 		}
 		shooterButtonPrev = false;
 		shooterState = false;
 		
 		//Assign Hanging motor controllers
 		hangingWinch = new VictorSP(6);
+		hangingWinch.setInverted(true);
 		hangFeedForward = false;
 		hangButtonPrev = false;
 		
@@ -455,7 +456,7 @@ public class Robot extends IterativeRobot
 			gearRotatorControl(operatorController.getAButton());
 
 			//Ball Intake: left trigger
-			intakeBalls(operatorController.getRawAxis(2));
+			//intakeBalls(operatorController.getRawAxis(2));
 			
 			//Ball Feeding: left joystick y axis
 			feedBalls(operatorController.getRawAxis(1));
@@ -470,7 +471,9 @@ public class Robot extends IterativeRobot
 			shooterControl(operatorController.getRawButton(5), SmartDashboard.getBoolean("Shooter PID on", false)); //set to true for PID
 
 			//Hanging: right trigger passes for throttle value, X button toggles feed-forward on and off
-			hangingControl(operatorController.getRawAxis(3), operatorController.getXButton());
+			
+			//TEMPORARILY CHANGED TO RIGHT STICK (3 is right button)
+			hangingControl(operatorController.getRawAxis(5), operatorController.getXButton());
 			}
 	}
 	
@@ -564,7 +567,7 @@ public class Robot extends IterativeRobot
 	{
 		//intake and feeder gearboxes run in opposite directions, so one must be reversed
 		//if this is backward, move -1 component to other one
-		intakeBelt.set(feedSpeed);
+		intakeBelt.set(-1 * feedSpeed);
 		feederBelt.set(-1 * feedSpeed);
 	}
 
@@ -649,30 +652,30 @@ public class Robot extends IterativeRobot
 				ShooterD = SmartDashboard.getNumber("Shooter D", ShooterD);
 				
 				//double shooterTargetRPM = 4000.0; //now a global variable
-				shooterMotor1.changeControlMode(TalonControlMode.Speed);
-				shooterMotor1.set(ShooterTargetRPM * 3.625); //3.625 is the gear ratio between 775 and output
-				shooterMotor1.set(ShooterF);
-				shooterMotor1.set(ShooterP);
-				shooterMotor1.set(ShooterI);
-				shooterMotor1.set(ShooterD);
+				shooterMotor3.changeControlMode(TalonControlMode.Speed);
+				shooterMotor3.set(ShooterTargetRPM * 3.625); //3.625 is the gear ratio between 775 and output
+				shooterMotor3.set(ShooterF);
+				shooterMotor3.set(ShooterP);
+				shooterMotor3.set(ShooterI);
+				shooterMotor3.set(ShooterD);
 				
 				//send data to smartdashboard
-				SmartDashboard.putNumber("Shooter Error", shooterMotor1.getClosedLoopError());
-				SmartDashboard.putNumber("Shooter Signal", shooterMotor1.getOutputVoltage() / shooterMotor1.getBusVoltage());
+				SmartDashboard.putNumber("Shooter Error", shooterMotor3.getClosedLoopError());
+				SmartDashboard.putNumber("Shooter Signal", shooterMotor3.getOutputVoltage() / shooterMotor3.getBusVoltage());
 				//not sure if output voltage needs to be divided by bus or not
 			}
 			else //if pid is unchecked
 			{
 				//change talon to open-loop mode, set a value
-				shooterMotor1.changeControlMode(TalonControlMode.PercentVbus);
-				shooterMotor1.set(OLShooterValue);
+				shooterMotor3.changeControlMode(TalonControlMode.PercentVbus);
+				shooterMotor3.set(OLShooterValue);
 			}
 		}
 		else
 		{
 			//change talon to open-loop mode, set to off
-			shooterMotor1.changeControlMode(TalonControlMode.PercentVbus);
-			shooterMotor1.set(0.0);
+			shooterMotor3.changeControlMode(TalonControlMode.PercentVbus);
+			shooterMotor3.set(0.0);
 		}
 	}
 	
@@ -687,7 +690,7 @@ public class Robot extends IterativeRobot
 	*/
 	public void hangingControl(double hangingSpeed, boolean ffButton)
 	{
-		final double hangFFValue = 0.1; //change this to change how much FF to apply
+		final double hangFFValue = 0.3; //change this to change how much FF to apply
 		
 		//first check to see if the feed forward button has been pressed AND if it changed state
 		//otherwise you would rapidly alternate between ff being on and off as long as the button was pressed!
@@ -713,6 +716,31 @@ public class Robot extends IterativeRobot
 		//actually do the hanging motor command here
 		//if you need to invert this, also invert the hangFFValue constant above
 		hangingWinch.set(hangingSpeed);
+	}
+	
+	public void testPeriodic() {
+		if (operatorController.getAButton())
+		{
+			shooterMotor1.set(1.0);
+		}
+		else
+			shooterMotor1.set(0);
+		if (operatorController.getBButton())
+		{
+			shooterMotor2.set(1.0);
+		}
+		else
+		{
+			shooterMotor2.set(0);
+		}
+		if (operatorController.getXButton())
+		{
+			shooterMotor3.set(1.0);
+		}
+		else
+		{
+			shooterMotor3.set(0);
+		}
 	}
 	
 	/**
