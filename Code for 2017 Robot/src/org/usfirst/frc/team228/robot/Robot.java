@@ -61,7 +61,7 @@ public class Robot extends IterativeRobot
 	
 	//Gyro
 	ADXRS450_Gyro robotGyro;
-	boolean calGyro;
+	boolean calGyro; //when true, gyro will calibrate
 	
 	//Drivetrain
 	//drive motor controllers
@@ -78,13 +78,13 @@ public class Robot extends IterativeRobot
 	XboxController driverController, operatorController;
 
 	//Gear Manipulation
-	//pincher
+	//Pincher
 	DoubleSolenoid pincher;
-	boolean pincherState; //when true, will pinch 
+	boolean pincherState; //pinching = true
 	boolean pincherButtonPrev; //state of the button from last iteration
-	//rotator, moves gear up/down
+	//Rotator, moves gear up/down
 	Solenoid gearRotator; 
-	boolean gearRotatorState; //when true, will hold gear down
+	boolean gearRotatorState; //rotator down = true
 	boolean gearRotatorButtonPrev; //state of the button from last iteration
 	//sensors
 	//DigitalInput gearDetectionLimitSwitch; //not currently initialized
@@ -94,11 +94,11 @@ public class Robot extends IterativeRobot
 	VictorSP intakeBelt, feederBelt;
 	//human load gate
 	Solenoid HLGate;
-	boolean HLGateState; //when true, will open the human load gate 
+	boolean HLGateState; //human load gate = true
 	boolean HLGateButtonPrev; //state of the button from last iteration
 	//dumper gate
 	Solenoid dumperGate;
-	boolean dumperState; //when true, will open the dumper gate
+	boolean dumperState; //dumper gate open = true
 	boolean dumperButtonPrev; //state of the button from last iteration
 
 	//Shooter
@@ -107,8 +107,9 @@ public class Robot extends IterativeRobot
 	boolean shooterState;
 	boolean shooterButtonPrev;
 	//constant for shooter speed
-	double OLShooterValue = 0.57; //no longer a constant //"open loop shooter value"
-	double ShooterTargetRPM, ShooterF, ShooterP, ShooterI, ShooterD;
+	double OLShooterValue = 0.57; //"open loop shooter value" //no longer FINAL
+	double ShooterTarget, ShooterF, ShooterP, ShooterI, ShooterD;
+	int ShooterIZone;
 	
 	//Hanging
 	//motor controllers
@@ -137,10 +138,10 @@ public class Robot extends IterativeRobot
 		
 		//Shooter
 		//put shooter constant data
-		//SmartDashboard.putNumber("Shooter constant", OLShooterValue);
+		SmartDashboard.putNumber("Shooter constant", OLShooterValue);
 		//get user input for constant, assign to OLShooterValue
 		//puts a boolean (which becomes checkbox) on SmartDashboard
-		//SmartDashboard.putBoolean("Shooter PID on", false);
+		SmartDashboard.putBoolean("Shooter PID on", false);
 		
 		//Assign Chooser for Autonomous programs
 		autoChooser = new SendableChooser<String>();
@@ -229,17 +230,20 @@ public class Robot extends IterativeRobot
 		//set nominal and peak voltage, 12V means full (but only here!)
 		shooterMotor3.configNominalOutputVoltage(0.0, -0.0);
 		shooterMotor3.configPeakOutputVoltage(12.0, -12.0);
+		shooterMotor3.reverseSensor(true);
 		
 		//internet told me to put this here for now?
 		
 		//default RPM, F, P, I, D values, write these in once known
-		ShooterTargetRPM = 4000;
-		ShooterF = 0;
-		ShooterP = 0;
-		ShooterI = 0;
-		ShooterD = 0;
+		ShooterTarget = 184;
+		ShooterF = 3.15;
+		ShooterP = 3.2;
+		ShooterI = 0.02;
+		ShooterD = 30;
+		ShooterIZone = 20; //integral error zone - ignores high error
+		//not put to smartdashboard
 		//display target rpm, F, P, I, and D
-		SmartDashboard.putNumber("Shooter Target RPM", ShooterTargetRPM);
+		SmartDashboard.putNumber("Shooter Target", ShooterTarget);
 		SmartDashboard.putNumber("Shooter F", ShooterF);
 		SmartDashboard.putNumber("Shooter P", ShooterP);
 		SmartDashboard.putNumber("Shooter I", ShooterI);
@@ -273,8 +277,10 @@ public class Robot extends IterativeRobot
 	{
 		//Get shooter constant from user on SmartDashboard
 		//OLShooterValue = SmartDashboard.getNumber("Shooter constant", OLShooterValue);
-		SmartDashboard.putData("Auto Choices", autoChooser);
-		SmartDashboard.putData("Drive Choices", driveChooser);
+		
+		//this might be messing up SmartDashboard
+		//SmartDashboard.putData("Auto Choices", autoChooser);
+		//SmartDashboard.putData("Drive Choices", driveChooser);
 		
 		//checks if gyro calibration check box is on
 		calGyro = SmartDashboard.getBoolean("Gyro Calibrate", true);
@@ -564,8 +570,8 @@ public class Robot extends IterativeRobot
 		{
 			feedSpeed = 0;
 		}
-		intakeBelt.set(-1*(intakeSpeed + feedSpeed));
-		feederBelt.set(intakeSpeed + (-1 * feedSpeed));
+		intakeBelt.set(intakeSpeed + (-1 * feedSpeed));
+		feederBelt.set(-1*(intakeSpeed + feedSpeed));
 	}
 
 	/**
@@ -629,6 +635,12 @@ public class Robot extends IterativeRobot
 	public void shooterControl(boolean shooterButton, boolean isPID)
 	{
 		//get user input for constant, assign to OLShooterValue
+		
+		SmartDashboard.putNumber("Shooter Signal", shooterMotor3.getOutputVoltage() / shooterMotor3.getBusVoltage());
+		SmartDashboard.putNumber("Shooter Error", shooterMotor3.getClosedLoopError());
+		SmartDashboard.putNumber("Shooter Speed", shooterMotor3.getSpeed());
+		//move back if needed to inside PID code
+		
 		OLShooterValue = SmartDashboard.getNumber("Shooter constant", OLShooterValue);
 			
 		if(shooterButton && shooterButton != shooterButtonPrev)
@@ -643,30 +655,34 @@ public class Robot extends IterativeRobot
 			if (isPID)
 			{
 				//get latest constants from SmartDashboard
-				ShooterTargetRPM = SmartDashboard.getNumber("Shooter Target RPM", ShooterTargetRPM);
+				ShooterTarget = SmartDashboard.getNumber("Shooter Target", ShooterTarget);
 				ShooterF = SmartDashboard.getNumber("Shooter F", ShooterF);
 				ShooterP = SmartDashboard.getNumber("Shooter P", ShooterP);
 				ShooterI = SmartDashboard.getNumber("Shooter I", ShooterI);
 				ShooterD = SmartDashboard.getNumber("Shooter D", ShooterD);
 				
-				//double shooterTargetRPM = 4000.0; //now a global variable
+				//double ShooterTarget = 4000.0; //now a global variable
 				shooterMotor3.changeControlMode(TalonControlMode.Speed);
-				//encoder is 12 CPR
+				//encoder is 12 CPR (counts per revolution)
 				//speed setpoint is ticks per 10ms
 				//RPM to ticks / 10ms conversion: RPM / 60 / 100 * 12 or RPM * 12 / 6000 or 1/500 
 				//also factor in gear ratio of 3.625:1
-				shooterMotor3.set(ShooterTargetRPM * 3.625 / 500);
+				//4x for quadrature mode
+				//shooterMotor3.set(ShooterTarget * 3.625 / 500 * 4);
+				shooterMotor3.set(ShooterTarget);
 				shooterMotor3.setF(ShooterF);
 				shooterMotor3.setP(ShooterP);
 				shooterMotor3.setI(ShooterI);
 				shooterMotor3.setD(ShooterD);
+				shooterMotor3.setIZone(ShooterIZone);
+				//The I Zone is not configurable on SmartDashboard
 				
 				//send data to smartdashboard
-				SmartDashboard.putNumber("Shooter Error", shooterMotor3.getClosedLoopError());
-				SmartDashboard.putNumber("Shooter Signal", shooterMotor3.getOutputVoltage() / shooterMotor3.getBusVoltage());
+				//SmartDashboard.putNumber("Shooter Error", shooterMotor3.getClosedLoopError());
+				//moved error and signal to top of function
 				//not sure if output voltage needs to be divided by bus or not
 			}
-			else //if pid is unchecked
+			else //if PID is unchecked
 			{
 				//change talon to open-loop mode, set a value
 				shooterMotor3.changeControlMode(TalonControlMode.PercentVbus);
