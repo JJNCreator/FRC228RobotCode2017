@@ -639,7 +639,7 @@ public class Robot extends IterativeRobot
 		shooterButtonPrev = shooterButton;
 		if (shooterState) //if the shooter has toggled on
 		{
-			SmartDashboard.putBoolean("Shooter On", true);
+			smartDashboard.putBoolean("Shooter On", true);
 			if (isPID)
 			{
 				//get latest constants from SmartDashboard
@@ -720,10 +720,6 @@ public class Robot extends IterativeRobot
 		//if you need to invert this, also invert the hangFFValue constant above
 		hangingWinch.set(hangingSpeed);
 	}
-	/**
-	 * This function toggles the dumper gate using a button
-	 * @param dumperButton checks to see if the dumper gate should be set to true or false
-	 */
 	
 	/** Test mode is used in order to verify motors are working properly and spinning in correct direction.
 	* Do not use for anything other than debugging!!
@@ -740,19 +736,6 @@ public class Robot extends IterativeRobot
 		{
 			shooterMotor2.set(1.0);
 		}
-	}
-	/**
-	 * This function toggles the human load gate using a button
-	 * @param HLGateButton checks to see if the value of HLGateButtonState should be set to true or false
-	 */
-	public void HLGateControl(boolean HLGateButton)
-	{
-		//if the button is pressed, and if it changed state
-		if (HLGateButton && HLGateButton != HLGateButtonPrev)
-		{ 
-			//toggle the state of button
-			HLGateButtonState = !HLGateButtonState;
-		}
 		else
 		{
 			shooterMotor2.set(0);
@@ -766,6 +749,7 @@ public class Robot extends IterativeRobot
 			shooterMotor3.set(0);
 		}
 	}
+	
 	/**
 	 * This is an example function for toggling when you press a button
 	 * 
@@ -800,5 +784,6 @@ public class Robot extends IterativeRobot
 			//mechanism OFF state
 			exampleMechanism.set(false);
 		}
-	}*/
+	}
+	*/
 }
