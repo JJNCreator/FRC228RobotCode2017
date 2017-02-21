@@ -438,6 +438,18 @@ public class Robot extends IterativeRobot
 		hangingControl(operatorController.getRawAxis(5), operatorController.getXButton());
 	}
 	
+	public void disabledInit()
+	{
+		//set all of the toggle states for everything to false
+		//this prevents unexpected movement on re-enable
+		//pincherState = false; //pincherState should not change actually
+		gearRotatorState = false;
+		HLGateState = false;
+		dumperState = false;
+		shooterState = false;
+		//hangFeedForward = false; //also not sure here
+	}
+	
 	/**
 	 * This function is called periodically during disabled mode
 	 */
