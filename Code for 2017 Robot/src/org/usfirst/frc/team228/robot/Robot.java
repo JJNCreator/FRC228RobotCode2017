@@ -627,6 +627,7 @@ public class Robot extends IterativeRobot
 		shooterButtonPrev = shooterButton;
 		if (shooterState) //if the shooter has toggled on
 		{
+			smartDashboard.putBoolean("Shooter On", true);
 			if (isPID)
 			{
 				//get latest constants from SmartDashboard
@@ -638,11 +639,15 @@ public class Robot extends IterativeRobot
 				
 				//double shooterTargetRPM = 4000.0; //now a global variable
 				shooterMotor3.changeControlMode(TalonControlMode.Speed);
-				shooterMotor3.set(ShooterTargetRPM * 3.625); //3.625 is the gear ratio between 775 and output
-				shooterMotor3.set(ShooterF);
-				shooterMotor3.set(ShooterP);
-				shooterMotor3.set(ShooterI);
-				shooterMotor3.set(ShooterD);
+				//encoder is 12 CPR
+				//speed setpoint is ticks per 10ms
+				//RPM to ticks / 10ms conversion: RPM / 60 / 10 * 12 or RPM * 12 / 600 or 1/50 
+				//also factor in gear ratio of 3.625:1
+				shooterMotor3.set(ShooterTargetRPM * 3.625 / 50);
+				shooterMotor3.setF(ShooterF);
+				shooterMotor3.setP(ShooterP);
+				shooterMotor3.setI(ShooterI);
+				shooterMotor3.setD(ShooterD);
 				
 				//send data to smartdashboard
 				SmartDashboard.putNumber("Shooter Error", shooterMotor3.getClosedLoopError());
@@ -659,6 +664,7 @@ public class Robot extends IterativeRobot
 		else
 		{
 			//change talon to open-loop mode, set to off
+			SmartDashboard.putBoolean("Shooter On", false);
 			shooterMotor3.changeControlMode(TalonControlMode.PercentVbus);
 			shooterMotor3.set(0.0);
 		}
