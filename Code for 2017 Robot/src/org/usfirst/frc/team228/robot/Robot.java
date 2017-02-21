@@ -641,9 +641,9 @@ public class Robot extends IterativeRobot
 				shooterMotor3.changeControlMode(TalonControlMode.Speed);
 				//encoder is 12 CPR
 				//speed setpoint is ticks per 10ms
-				//RPM to ticks / 10ms conversion: RPM / 60 / 10 * 12 or RPM * 12 / 600 or 1/50 
+				//RPM to ticks / 10ms conversion: RPM / 60 / 100 * 12 or RPM * 12 / 6000 or 1/500 
 				//also factor in gear ratio of 3.625:1
-				shooterMotor3.set(ShooterTargetRPM * 3.625 / 50);
+				shooterMotor3.set(ShooterTargetRPM * 3.625 / 500);
 				shooterMotor3.setF(ShooterF);
 				shooterMotor3.setP(ShooterP);
 				shooterMotor3.setI(ShooterI);
