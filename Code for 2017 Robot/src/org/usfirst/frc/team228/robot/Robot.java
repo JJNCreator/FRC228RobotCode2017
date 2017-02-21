@@ -32,8 +32,7 @@ public class Robot extends IterativeRobot
 	//PRE INIT - Create variables
 	
 	//ATTENTION!
-	//set to true for 2016 robot, false for either 2017 robot:
-	final boolean is2016Robot = false;
+	final boolean isPracticeRobot = false; //for later
 	
 	//Auto Selection
 	final String defaultAuto = "Do nothing";
@@ -108,7 +107,7 @@ public class Robot extends IterativeRobot
 	boolean shooterState;
 	boolean shooterButtonPrev;
 	//constant for shooter speed
-	double OLShooterValue = 0.7; //no longer a constant //"open loop shooter value"
+	double OLShooterValue = 0.57; //no longer a constant //"open loop shooter value"
 	double ShooterTargetRPM, ShooterF, ShooterP, ShooterI, ShooterD;
 	
 	//Hanging
@@ -143,25 +142,6 @@ public class Robot extends IterativeRobot
 		//puts a boolean (which becomes checkbox) on SmartDashboard
 		//SmartDashboard.putBoolean("Shooter PID on", false);
 		
-		//default RPM, F, P, I, D values, write these in once known
-		ShooterTargetRPM = 4000;
-		ShooterF = 0;
-		ShooterP = 0;
-		ShooterI = 0;
-		ShooterD = 0;
-		//display target rpm, F, P, I, and D
-		SmartDashboard.putNumber("Shooter Target RPM", ShooterTargetRPM);
-		SmartDashboard.putNumber("Shooter F", ShooterF);
-		SmartDashboard.putNumber("Shooter P", ShooterP);
-		SmartDashboard.putNumber("Shooter I", ShooterI);
-		SmartDashboard.putNumber("Shooter D", ShooterD);
-		
-		//old code
-		/*SmartDashboard.putNumber("Shooter F", shooterMotor1.getF());
-		SmartDashboard.putNumber("Shooter P", shooterMotor1.getP());
-		SmartDashboard.putNumber("Shooter I", shooterMotor1.getI());
-		SmartDashboard.putNumber("Shooter D", shooterMotor1.getD());*/
-		
 		//Assign Chooser for Autonomous programs
 		autoChooser = new SendableChooser<String>();
 		//autoChooser = new SendableChooser();
@@ -178,7 +158,7 @@ public class Robot extends IterativeRobot
 
 		//Put Teleop Drive Mode Chooser
 		driveChooser.addDefault("GTA Drive", GTAMode);
-		driveChooser.addObject("Tank Drive", tankMode); //consider simplifying this process
+		driveChooser.addObject("Tank Drive", tankMode); 
 		driveChooser.addObject("Arcade Drive", arcadeMode);
 		SmartDashboard.putData("Drive Choices", driveChooser);
 
@@ -194,20 +174,11 @@ public class Robot extends IterativeRobot
 		
 		//Drivetrain
 		//Assign drive motor controllers
-		if (is2016Robot)
-		{
-			leftDrive1 = new VictorSP(0);
-			leftDrive2 = new VictorSP(1);
-			rightDrive1 = new VictorSP(3);
-			rightDrive2 = new VictorSP(4);
-		} 
-		else 
-		{
-			leftDrive1 = new VictorSP(0);
-			leftDrive2 = new VictorSP(1);
-			rightDrive1 = new VictorSP(2);
-			rightDrive2 = new VictorSP(3);
-		}
+		leftDrive1 = new VictorSP(0);
+		leftDrive2 = new VictorSP(1);
+		rightDrive1 = new VictorSP(2);
+		rightDrive2 = new VictorSP(3);
+		
 		//Assign drivetrain shifters
 		leftShifter = new Solenoid(0);
 		rightShifter = new Solenoid(1);
@@ -231,16 +202,8 @@ public class Robot extends IterativeRobot
 		
 		//Ball Manipulation
 		//Assign belt motor controllers
-		if (is2016Robot)
-		{
-			intakeBelt = new VictorSP(7); //ball intake
-			feederBelt = new VictorSP(8); //shooter feed belt
-		}
-		else
-		{
-			intakeBelt = new VictorSP(4); //ball intake
-			feederBelt = new VictorSP(5); //shooter feed belt
-		}
+		intakeBelt = new VictorSP(4); //ball intake
+		feederBelt = new VictorSP(5); //shooter feed belt
 		//Assign Human Load gate
 		HLGate = new Solenoid(5);
 		HLGateState = false;
@@ -252,31 +215,41 @@ public class Robot extends IterativeRobot
 		
 		//Shooter
 		//Assign Shooter motor controllers
-		if (!is2016Robot)
-		{
-			shooterMotor1 = new CANTalon(1); //verify IDs
-			shooterMotor2 = new CANTalon(2); 
-			shooterMotor3 = new CANTalon(3);
-			
-			shooterMotor3.setFeedbackDevice(FeedbackDevice.QuadEncoder);
-			//set other Talons to follow - verify correct numbers for everything
-			shooterMotor2.changeControlMode(CANTalon.TalonControlMode.Follower);
-			shooterMotor2.set(shooterMotor3.getDeviceID());
-			shooterMotor1.changeControlMode(CANTalon.TalonControlMode.Follower);
-			shooterMotor1.set(shooterMotor3.getDeviceID());
-			
-			//set nominal and peak voltage, 12V means full (but only here!)
-			shooterMotor3.configNominalOutputVoltage(0.0, -0.0);
-			shooterMotor3.configPeakOutputVoltage(12.0, -12.0);
-			
-			//internet told me to put this here for now?
-			shooterMotor3.setProfile(0);//what the fuck is this
-			shooterMotor3.setF(ShooterF);
-			shooterMotor3.setP(ShooterP);
-			shooterMotor3.setI(ShooterI);
-			shooterMotor3.setD(ShooterD); //the manual had these initialize to 0 but i wasn't sure
-			
-		}
+		shooterMotor1 = new CANTalon(1); //verify IDs
+		shooterMotor2 = new CANTalon(2); 
+		shooterMotor3 = new CANTalon(3);
+		
+		shooterMotor3.setFeedbackDevice(FeedbackDevice.QuadEncoder);
+		//set other Talons to follow - verify correct numbers for everything
+		shooterMotor2.changeControlMode(CANTalon.TalonControlMode.Follower);
+		shooterMotor2.set(shooterMotor3.getDeviceID());
+		shooterMotor1.changeControlMode(CANTalon.TalonControlMode.Follower);
+		shooterMotor1.set(shooterMotor3.getDeviceID());
+		
+		//set nominal and peak voltage, 12V means full (but only here!)
+		shooterMotor3.configNominalOutputVoltage(0.0, -0.0);
+		shooterMotor3.configPeakOutputVoltage(12.0, -12.0);
+		
+		//internet told me to put this here for now?
+		
+		//default RPM, F, P, I, D values, write these in once known
+		ShooterTargetRPM = 4000;
+		ShooterF = 0;
+		ShooterP = 0;
+		ShooterI = 0;
+		ShooterD = 0;
+		//display target rpm, F, P, I, and D
+		SmartDashboard.putNumber("Shooter Target RPM", ShooterTargetRPM);
+		SmartDashboard.putNumber("Shooter F", ShooterF);
+		SmartDashboard.putNumber("Shooter P", ShooterP);
+		SmartDashboard.putNumber("Shooter I", ShooterI);
+		SmartDashboard.putNumber("Shooter D", ShooterD);
+		
+		shooterMotor3.setProfile(0);//what the fuck is this
+		shooterMotor3.setF(ShooterF);
+		shooterMotor3.setP(ShooterP);
+		shooterMotor3.setI(ShooterI);
+		shooterMotor3.setD(ShooterD); //the manual had these initialize to 0 but i wasn't sure
 		shooterButtonPrev = false;
 		shooterState = false;
 		
@@ -302,16 +275,14 @@ public class Robot extends IterativeRobot
 		//OLShooterValue = SmartDashboard.getNumber("Shooter constant", OLShooterValue);
 		SmartDashboard.putData("Auto Choices", autoChooser);
 		SmartDashboard.putData("Drive Choices", driveChooser);
+		
+		//checks if gyro calibration check box is on
 		calGyro = SmartDashboard.getBoolean("Gyro Calibrate", true);
 
 	}
 	
 	/**
-	 * This autonomous (along with the chooser code above) shows how to select between different autonomous modes
-	 * using the dashboard. The sendable chooser code works with the Java SmartDashboard. 
-	 *
-	 * You can add additional auto modes by adding additional comparisons to the switch structure below with additional strings.
-	 * If using the SendableChooser make sure to add them to the chooser code above as well.
+	 * This code runs at the beginning of autonomous mode
 	 */
 	public void autonomousInit()
 	{
@@ -320,25 +291,24 @@ public class Robot extends IterativeRobot
 		//print autonomous selection
 		System.out.println("Auto selected: " + autoSelected);
 		
+		//zeros gyro. also ensures gyro finishes calibrating before continuing.
 		robotGyro.reset();
 		
+		//starting the timer after the gyro ensures auto runs for correct length even if delayed
 		autoTimer.reset();
 		autoTimer.start();
-		
-		//inAuto = true;
 	}
 
 	/**
 	 * This function is called periodically during autonomous
+	 * The switch case will determine which autonomous mode runs based on the chooser
 	 */
 	public void autonomousPeriodic()
 	{
 		switch(autoSelected)
 		{
 		case customAuto:
-			//CustomAuto(); //commenting out because we're rewriting this function
-			testAuto();
-			//Put custom auto code here   
+			testAuto();   
 			break;
 		case gyroAuto:
 			gyroTestAuto();
@@ -346,7 +316,6 @@ public class Robot extends IterativeRobot
 		case defaultAuto:
 		default:
 			drivetrain.arcadeDrive(0.0, 0.0); //prevents watchdog error
-			//Put default auto code here
 			break;
 		}
 	}
@@ -359,18 +328,16 @@ public class Robot extends IterativeRobot
 	{
 		//Timer.getMatchTime() wasn't working, is now autoTimer.get()
 		//0s: forward
-		//2s: backward
+		//2s: half speed
 		//4s: stop
 		
 		//at 0s: drive forward for 2 seconds
-		//if (Timer.getMatchTime() < 2)
 		if (autoTimer.get() < 2)
 		{
 			drivetrain.arcadeDrive(1.0, 0.0);
 		}
-		//at 2s: drive backwards for 2 seconds
-		//else if (Timer.getMatchTime() < 4)
-		else if (/*autoTimer.get() > 2 && */autoTimer.get() < 4)
+		//at 2s: drive half speed for 2 seconds
+		else if (autoTimer.get() < 4)
 		{
 			drivetrain.arcadeDrive(0.5, 0.0);
 		}
@@ -382,7 +349,8 @@ public class Robot extends IterativeRobot
 	}
 	
 	/**
-	 * This method checks the angle on the gyro
+	 * This method checks the angle on the gyro repeatedly.
+	 * It uses a delay, which I don't like and shouldn't be done in real code
 	 */
 	public void gyroTestAuto()
 	{
@@ -402,7 +370,7 @@ public class Robot extends IterativeRobot
 		//get drive mode selection (tank, arcade, GTA)
 		//driveMode = (String) driveChooser.getSelected();
 		//print drive mode selection
-		System.out.println("Drive mode selected: " + driveMode);		
+		//System.out.println("Drive mode selected: " + driveMode);		
 	}
 
 	/**
@@ -410,11 +378,6 @@ public class Robot extends IterativeRobot
 	 */
 	public void teleopPeriodic()
 	{
-		//don't put print statements in periodic; they would print repeatedly
-		
-		//display the shooter constant (OLShooterValue)
-		//SmartDashboard.putNumber("Shooter constant copy", OLShooterValue);
-		
 		//DRIVER CONTROLS
 		//Value for the GTA Mode arcade function and SmartDashboard data
 		double combinedTriggerValue;
@@ -443,38 +406,36 @@ public class Robot extends IterativeRobot
 		}
 		
 		//the code below duplicates what is already shown on the driver station?
-		SmartDashboard.putNumber("XAxisRightJoystick", driverController.getRawAxis(4));
-		SmartDashboard.putNumber("YAxisLeftJoystick", driverController.getRawAxis(1));
+		//SmartDashboard.putNumber("XAxisRightJoystick", driverController.getRawAxis(4));
+		//SmartDashboard.putNumber("YAxisLeftJoystick", driverController.getRawAxis(1));
 		
 		//OPERATOR CONTROLS
-		if (!is2016Robot)
-		{
-			//Pincher: toggle  with B (DoubleSolenoid.Value.kForward = closed, ...kReverse = open)
-			pincherControl(operatorController.getBButton());
+		//Pincher: toggle  with B (DoubleSolenoid.Value.kForward = closed, ...kReverse = open)
+		pincherControl(operatorController.getBButton());
 
-			//Gear Rotator: toggle with A (on/down)/(DEFAULT: off/up)
-			gearRotatorControl(operatorController.getAButton());
+		//Gear Rotator: toggle with A (on/down)/(DEFAULT: off/up)
+		gearRotatorControl(operatorController.getAButton());
 
-			//Ball Intake: left trigger
-			//intakeBalls(operatorController.getRawAxis(2));
-			
-			//Ball Feeding: left joystick y axis
-			feedBalls(operatorController.getRawAxis(1));
+		//Ball Intake: left trigger
+		//intakeBalls(operatorController.getRawAxis(2));
+		//Ball Feeding: left joystick y axis
+		//feedBalls(operatorController.getRawAxis(1));
+		
+		//Ball intake and feed combined function, left trigger and left joystick y axis
+		intakeAndFeedBalls(operatorController.getRawAxis(2), operatorController.getRawAxis(1));
 
-			//Human Load Gate: toggle with Y (on/open)/(DEFAULT: off/closed)
-			HLGateControl(operatorController.getYButton());
-			
-			//Dumper Gate: toggle with right bumper (6) (on/open/shoot)/(DEFAULT: off/closed/no shoot)
-			dumperGateControl(operatorController.getRawButton(6));
+		//Human Load Gate: toggle with Y (on/open)/(DEFAULT: off/closed)
+		HLGateControl(operatorController.getYButton());
+		
+		//Dumper Gate: toggle with right bumper (6) (on/open/shoot)/(DEFAULT: off/closed/no shoot)
+		dumperGateControl(operatorController.getRawButton(6));
 
-			//Shooter: spin up/down toggle with left bumper
-			shooterControl(operatorController.getRawButton(5), SmartDashboard.getBoolean("Shooter PID on", false)); //set to true for PID
+		//Shooter: spin up/down toggle with left bumper
+		shooterControl(operatorController.getRawButton(5), SmartDashboard.getBoolean("Shooter PID on", false)); //set to true for PID
 
-			//Hanging: right trigger passes for throttle value, X button toggles feed-forward on and off
-			
-			//TEMPORARILY CHANGED TO RIGHT STICK (3 is right button)
-			hangingControl(operatorController.getRawAxis(5), operatorController.getXButton());
-			}
+		//Hanging: right trigger passes for throttle value, X button toggles feed-forward on and off
+		//TEMPORARILY CHANGED TO RIGHT STICK (3 is right button)
+		hangingControl(operatorController.getRawAxis(5), operatorController.getXButton());
 	}
 	
 	/**
@@ -549,6 +510,10 @@ public class Robot extends IterativeRobot
 	* intakeSpeed is expected to be between 0 and 1
 	* This allows a trigger value to be passed into it, for example
 	*/
+	
+	//This function did not work when feedBalls was run in the same loop
+	//They would overwrite the commands of each other and it caused problems
+	//new combined function located below
 	public void intakeBalls(double intakeSpeed)
 	{
 		//intake should go in, feeder should go OUT 
@@ -569,6 +534,26 @@ public class Robot extends IterativeRobot
 		//if this is backward, move -1 component to other one
 		intakeBelt.set(-1 * feedSpeed);
 		feederBelt.set(-1 * feedSpeed);
+	}
+	
+	/**
+	* This function is a copy of both the intake and feed functions, put together.
+	* This prevents conflicts between the two.
+	* When you get time later, overload this function with a one-constructor version
+	*/
+	public void intakeAndFeedBalls(double intakeSpeed, double feedSpeed)
+	{
+		//eliminates deadband caused by cheapo xbox controllers
+		if (intakeSpeed > -0.1 && intakeSpeed < 0.1) 
+		{
+			intakeSpeed = 0;
+		}
+		if (feedSpeed > -0.1 && feedSpeed < 0.1)
+		{
+			feedSpeed = 0;
+		}
+		intakeBelt.set(-1*(intakeSpeed + feedSpeed));
+		feederBelt.set(intakeSpeed + (-1 * feedSpeed));
 	}
 
 	/**
@@ -717,6 +702,10 @@ public class Robot extends IterativeRobot
 		//if you need to invert this, also invert the hangFFValue constant above
 		hangingWinch.set(hangingSpeed);
 	}
+	
+	/** Test mode is used in order to verify motors are working properly and spinning in correct direction.
+	* Do not use for anything other than debugging!!
+	*/
 	
 	public void testPeriodic() {
 		if (operatorController.getAButton())
