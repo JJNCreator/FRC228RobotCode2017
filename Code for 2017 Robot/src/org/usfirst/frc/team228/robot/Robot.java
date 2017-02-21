@@ -639,7 +639,7 @@ public class Robot extends IterativeRobot
 		shooterButtonPrev = shooterButton;
 		if (shooterState) //if the shooter has toggled on
 		{
-			smartDashboard.putBoolean("Shooter On", true);
+			SmartDashboard.putBoolean("Shooter On", true);
 			if (isPID)
 			{
 				//get latest constants from SmartDashboard
