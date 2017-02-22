@@ -33,7 +33,7 @@ public class Robot extends IterativeRobot
 	//PRE INIT - Create variables
 	
 	//ATTENTION!
-	final boolean isPracticeRobot = false; //for later
+	final boolean isPracticeRobot = true; //for later
 	
 	Preferences robotPrefs;
 	
@@ -170,7 +170,7 @@ public class Robot extends IterativeRobot
 		autoTimer = new Timer();
 		
 		//Assign Compressor
-		compressor = new Compressor();
+		//compressor = new Compressor();
 		
 		//Assign Gyro
 		robotGyro = new ADXRS450_Gyro();
@@ -233,30 +233,55 @@ public class Robot extends IterativeRobot
 		//set nominal and peak voltage, 12V means full (but only here!)
 		shooterMotor3.configNominalOutputVoltage(0.0, -0.0);
 		shooterMotor3.configPeakOutputVoltage(12.0, -12.0);
-		shooterMotor3.reverseSensor(true);
+		if (isPracticeRobot)
+		{
+			shooterMotor3.reverseSensor(true);
+		}
 		
 		//internet told me to put this here for now?
 		
 		//default RPM, F, P, I, D values, write these in once known
+		
+		//Shooter Target setting for point-blank shot, may add additional points later
 		ShooterTarget = 184;
+		
+		//Shooter Feed Forward experimentally determined, should probably never change
 		ShooterF = 3.15;
+		
+		//PID AND IZONE SETTINGS 
+		/** Below are some workable but conservative values
 		ShooterP = 3.2;
 		ShooterI = 0.02;
 		ShooterD = 30;
-		ShooterIZone = 20; //integral error zone - ignores high error
-		//not put to smartdashboard
+		ShooterIZone = 20; //integral error zone - ignores high error */
+		
+		/** These settings are a bit more aggressive. Might be slightly better than conservative settigs
+		ShooterP = 5;
+		ShooterI = 0.03;
+		ShooterD = 100;
+		ShooterIZone = 20;*/
+		
+		// These aggressive PID settings are what we tried last.
+		// Experimentation is still needed.
+		ShooterP = 10;
+		ShooterI = 0.02;
+		ShooterD = 125;
+		ShooterIZone = 20;
+		
 		//display target rpm, F, P, I, and D
 		SmartDashboard.putNumber("Shooter Target", ShooterTarget);
 		SmartDashboard.putNumber("Shooter F", ShooterF);
 		SmartDashboard.putNumber("Shooter P", ShooterP);
 		SmartDashboard.putNumber("Shooter I", ShooterI);
 		SmartDashboard.putNumber("Shooter D", ShooterD);
+		SmartDashboard.putNumber("Shooter I Zone", ShooterIZone);
 		
 		shooterMotor3.setProfile(0);//what the fuck is this
 		shooterMotor3.setF(ShooterF);
 		shooterMotor3.setP(ShooterP);
 		shooterMotor3.setI(ShooterI);
 		shooterMotor3.setD(ShooterD); //the manual had these initialize to 0 but i wasn't sure
+		shooterMotor3.setIZone(ShooterIZone);
 		shooterButtonPrev = false;
 		shooterState = false;
 		
@@ -459,6 +484,13 @@ public class Robot extends IterativeRobot
 		dumperState = false;
 		shooterState = false;
 		//hangFeedForward = false; //also not sure here
+		
+		//in case the robot was in test mode, shooter motor 1 and 2 may not be in follower mode anymore
+		//to be safe, they are set to follower mode every time the robot is disabled
+		shooterMotor2.changeControlMode(CANTalon.TalonControlMode.Follower);
+		shooterMotor2.set(shooterMotor3.getDeviceID());
+		shooterMotor1.changeControlMode(CANTalon.TalonControlMode.Follower);
+		shooterMotor1.set(shooterMotor3.getDeviceID());
 	}
 	
 	/**
@@ -639,25 +671,29 @@ public class Robot extends IterativeRobot
 	 */
 	public void shooterControl(boolean shooterButton, boolean isPID)
 	{
-		//get user input for constant, assign to OLShooterValue
 		
+		//Graph Signal and Error on SmartDashboard. Display Speed as number
 		SmartDashboard.putNumber("Shooter Signal", shooterMotor3.getOutputVoltage() / shooterMotor3.getBusVoltage());
 		SmartDashboard.putNumber("Shooter Error", shooterMotor3.getClosedLoopError());
 		SmartDashboard.putNumber("Shooter Speed", shooterMotor3.getSpeed());
 		//move back if needed to inside PID code
 		
+		//get user input for constant, assign to OLShooterValue
 		OLShooterValue = SmartDashboard.getNumber("Shooter constant", OLShooterValue);
-			
+		
+		//if a new button press has started, turn shooter on/off
+		//toggle shooter
 		if(shooterButton && shooterButton != shooterButtonPrev)
 		{
 			shooterState = !shooterState;
 		}
 		
 		shooterButtonPrev = shooterButton;
+		
 		if (shooterState) //if the shooter has toggled on
 		{
-			SmartDashboard.putBoolean("Shooter On", true);
-			if (isPID)
+			SmartDashboard.putBoolean("Shooter On", true); //indicate on dash that shooter is on
+			if (isPID) //if the PID check box on smartdashboard is on
 			{
 				//get latest constants from SmartDashboard
 				ShooterTarget = SmartDashboard.getNumber("Shooter Target", ShooterTarget);
@@ -665,33 +701,27 @@ public class Robot extends IterativeRobot
 				ShooterP = SmartDashboard.getNumber("Shooter P", ShooterP);
 				ShooterI = SmartDashboard.getNumber("Shooter I", ShooterI);
 				ShooterD = SmartDashboard.getNumber("Shooter D", ShooterD);
+				ShooterIZone = (int) SmartDashboard.getNumber("Shooter I Zone", ShooterIZone);
 				
 				//double ShooterTarget = 4000.0; //now a global variable
 				shooterMotor3.changeControlMode(TalonControlMode.Speed);
 				//encoder is 12 CPR (counts per revolution)
 				//speed setpoint is ticks per 10ms
-				//RPM to ticks / 10ms conversion: RPM / 60 / 100 * 12 or RPM * 12 / 6000 or 1/500 
-				//also factor in gear ratio of 3.625:1
-				//4x for quadrature mode
-				//shooterMotor3.set(ShooterTarget * 3.625 / 500 * 4);
+
+				//set PID loop to values from smart dashboard
 				shooterMotor3.set(ShooterTarget);
 				shooterMotor3.setF(ShooterF);
 				shooterMotor3.setP(ShooterP);
 				shooterMotor3.setI(ShooterI);
 				shooterMotor3.setD(ShooterD);
 				shooterMotor3.setIZone(ShooterIZone);
-				//The I Zone is not configurable on SmartDashboard
 				
-				//send data to smartdashboard
-				//SmartDashboard.putNumber("Shooter Error", shooterMotor3.getClosedLoopError());
-				//moved error and signal to top of function
-				//not sure if output voltage needs to be divided by bus or not
 			}
 			else //if PID is unchecked
 			{
 				//change talon to open-loop mode, set a value
 				shooterMotor3.changeControlMode(TalonControlMode.PercentVbus);
-				shooterMotor3.set(OLShooterValue);
+				shooterMotor3.set(OLShooterValue); //this value is from SmartDashboard
 			}
 		}
 		else
@@ -745,6 +775,14 @@ public class Robot extends IterativeRobot
 	/** Test mode is used in order to verify motors are working properly and spinning in correct direction.
 	* Do not use for anything other than debugging!!
 	*/
+	
+	//Currently Test mode is only used to make sure all 3 shooter motors are independently working
+	
+	public void testInit() {
+		//change motors 1 and 2 back to percent voltage mode
+		shooterMotor1.changeControlMode(TalonControlMode.PercentVbus);
+		shooterMotor2.changeControlMode(TalonControlMode.PercentVbus);
+	}
 	
 	public void testPeriodic() {
 		if (operatorController.getAButton())
