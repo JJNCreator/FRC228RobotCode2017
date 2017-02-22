@@ -19,6 +19,7 @@ import edu.wpi.first.wpilibj.Solenoid;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.VictorSP; //not victor like we thought
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.Preferences;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -33,6 +34,8 @@ public class Robot extends IterativeRobot
 	
 	//ATTENTION!
 	final boolean isPracticeRobot = false; //for later
+	
+	Preferences robotPrefs;
 	
 	//Auto Selection
 	final String defaultAuto = "Do nothing";
@@ -266,6 +269,8 @@ public class Robot extends IterativeRobot
 		//set example mechanism and button statuses to false
 		//exampleState = false;
 		//exampleButtonPrev = false;
+		
+		robotPrefs = Preferences.getInstance();
 	}
 	
 	/**
