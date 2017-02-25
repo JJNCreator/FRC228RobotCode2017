@@ -64,7 +64,7 @@ public class Robot extends IterativeRobot
 	
 	//Gyro
 	ADXRS450_Gyro robotGyro;
-	boolean calGyro; //when true, gyro will calibrate
+	boolean calGyro; //true = gyro will calibrate
 	
 	//Drivetrain
 	//drive motor controllers
@@ -83,25 +83,26 @@ public class Robot extends IterativeRobot
 	//Gear Manipulation
 	//Pincher
 	DoubleSolenoid pincher;
-	boolean pincherState; //pinching = true
+	boolean pincherState; //true = pinching
 	boolean pincherButtonPrev; //state of the button from last iteration
 	//Rotator, moves gear up/down
 	Solenoid gearRotator; 
-	boolean gearRotatorState; //rotator down = true
+	boolean gearRotatorState; //true = rotator down
 	boolean gearRotatorButtonPrev; //state of the button from last iteration
 	//sensors
 	//DigitalInput gearDetectionLimitSwitch; //not currently initialized
 	
 	//Ball Manipulation
-	//belt motor controllers
-	VictorSP intakeBelt, feederBelt;
+	//Feeder and Intake
+	VictorSP intakeBelt, feederBelt; //belt motor controllers
+	double feederMaxSpeed; //user input constant to control the speed of feederBelt
 	//human load gate
 	Solenoid HLGate;
-	boolean HLGateState; //human load gate = true
+	boolean HLGateState; //true = human load gate open
 	boolean HLGateButtonPrev; //state of the button from last iteration
 	//dumper gate
 	Solenoid dumperGate;
-	boolean dumperState; //dumper gate open = true
+	boolean dumperState; //true = dumper gate open
 	boolean dumperButtonPrev; //state of the button from last iteration
 
 	//Shooter
@@ -111,6 +112,7 @@ public class Robot extends IterativeRobot
 	boolean shooterButtonPrev;
 	//constant for shooter speed
 	double OLShooterValue = 0.57; //"open loop shooter value" //no longer FINAL
+	//target value for shooter speed, and constants for FPID
 	double ShooterTarget, ShooterF, ShooterP, ShooterI, ShooterD;
 	int ShooterIZone;
 	
@@ -205,9 +207,12 @@ public class Robot extends IterativeRobot
 		gearRotatorButtonPrev = false;
 		
 		//Ball Manipulation
+		//Intake and Feeder
 		//Assign belt motor controllers
 		intakeBelt = new VictorSP(4); //ball intake
 		feederBelt = new VictorSP(5); //shooter feed belt
+		feederMaxSpeed = 0.8; //arbitrary starting value
+		SmartDashboard.putNumber("Feeder Max Speed", feederMaxSpeed); //put feederMaxSpeed on SDB
 		//Assign Human Load gate
 		HLGate = new Solenoid(5);
 		HLGateState = false;
@@ -559,7 +564,7 @@ public class Robot extends IterativeRobot
 			gearRotator.set(false);
 		}
 	}	
-
+	
 	/** 
 	* This function controls the belt mechanisms when picking up off the floor
 	* intakeSpeed is expected to be between 0 and 1
@@ -569,6 +574,7 @@ public class Robot extends IterativeRobot
 	//This function did not work when feedBalls was run in the same loop
 	//They would overwrite the commands of each other and it caused problems
 	//new combined function located below
+	/*
 	public void intakeBalls(double intakeSpeed)
 	{
 		//intake should go in, feeder should go OUT 
@@ -576,13 +582,14 @@ public class Robot extends IterativeRobot
 		intakeBelt.set(intakeSpeed);
 		feederBelt.set(-1 * intakeSpeed);
 	}
-	
+	*/
 	/** 
 	* This function controls the belt mechanisms when feeding the shooter
 	* feedSpeed is expected to be between -1 and 1
 	* This allows a joystick value to be passed into it, for example
 	* @param feedSpeed
 	*/
+	/*
 	public void feedBalls(double feedSpeed)
 	{
 		//intake and feeder gearboxes run in opposite directions, so one must be reversed
@@ -590,14 +597,18 @@ public class Robot extends IterativeRobot
 		intakeBelt.set(-1 * feedSpeed);
 		feederBelt.set(-1 * feedSpeed);
 	}
-	
+	*/
 	/**
 	* This function is a copy of both the intake and feed functions, put together.
 	* This prevents conflicts between the two.
 	* When you get time later, overload this function with a one-constructor version
+	* intakeSpeed and feedSpeed are values based on the joystick input
+	* for intake and feeding respectively
 	*/
 	public void intakeAndFeedBalls(double intakeSpeed, double feedSpeed)
 	{
+		//get user input for Feeder Max Speed
+		feederMaxSpeed = SmartDashboard.getNumber("Feeder Max Speed", feederMaxSpeed);		
 		//eliminates deadband caused by cheapo xbox controllers
 		if (intakeSpeed > -0.1 && intakeSpeed < 0.1) 
 		{
@@ -608,7 +619,7 @@ public class Robot extends IterativeRobot
 			feedSpeed = 0;
 		}
 		intakeBelt.set(intakeSpeed + (-1 * feedSpeed));
-		feederBelt.set(-1*(intakeSpeed + feedSpeed));
+		feederBelt.set((-1*(intakeSpeed + feedSpeed))*feederMaxSpeed);
 	}
 
 	/**
