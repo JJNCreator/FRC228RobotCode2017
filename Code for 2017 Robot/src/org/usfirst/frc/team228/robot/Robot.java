@@ -72,7 +72,8 @@ public class Robot extends IterativeRobot
 	//encoders
 	Encoder leftDriveEncoder, rightDriveEncoder;
 	//pneumatics (shifters)
-	Solenoid leftShifter, rightShifter;
+	Solenoid driveShifter;
+	boolean shifterState, shifterButtonPrev;
 		
 	//Drive Function
 	RobotDrive drivetrain;
@@ -186,8 +187,9 @@ public class Robot extends IterativeRobot
 		rightDrive2 = new VictorSP(3);
 		
 		//Assign drivetrain shifters
-		leftShifter = new Solenoid(0);
-		rightShifter = new Solenoid(1);
+		driveShifter = new Solenoid(0);
+		shifterState = false; //false means high gear
+		shifterButtonPrev = false;
 
 		//Assign Drive Function
 		drivetrain = new RobotDrive(leftDrive1, leftDrive2, rightDrive1, rightDrive2);
@@ -431,18 +433,22 @@ public class Robot extends IterativeRobot
 		{
 		case arcadeMode:
 			drivetrain.arcadeDrive(driverController, 1, driverController, 4);
+			//since we aren't in GTA mode, the left bumper controls shifting
+			shifterControl(driverController.getRawButton(5));
 			break;
 		case tankMode:
 			drivetrain.tankDrive(driverController, 1, driverController, 5);
+			//since we aren't in GTA mode, the left bumper controls shifting
+			shifterControl(driverController.getRawButton(5));
 			break;
 		case GTAMode:
 		default: //we needed a default case to prevent watchdog errors if smartdashboard didn't work
 			combinedTriggerValue = (-1 * driverController.getRawAxis(2) + driverController.getRawAxis(3));
 			drivetrain.arcadeDrive(combinedTriggerValue, driverController.getRawAxis(0));
-			
+			//if we are in GTA mode, shifting is assigned to a face button instead
+			shifterControl(driverController.getAButton());
 			//display combinedTriggerValue
-			SmartDashboard.putNumber("GTADriveValue", combinedTriggerValue);
-
+			//SmartDashboard.putNumber("GTADriveValue", combinedTriggerValue);
 			break;
 		}
 		
@@ -488,6 +494,7 @@ public class Robot extends IterativeRobot
 		HLGateState = false;
 		dumperState = false;
 		shooterState = false;
+		shifterState = false;
 		//hangFeedForward = false; //also not sure here
 		
 		//in case the robot was in test mode, shooter motor 1 and 2 may not be in follower mode anymore
@@ -673,6 +680,35 @@ public class Robot extends IterativeRobot
 		{
 			//dumperGate closed/shoot state
 			dumperGate.set(false);
+		}
+	}
+	
+	/**
+	 * This function toggles the drivetrain shifters using a button
+	 * We will probably also call this in autonomous
+	 * @param shifterButton
+	 */
+	
+	public void shifterControl(boolean shifterButton)
+	{
+		//if button is pressed and the state changed (button isn't being held)
+		if (shifterButton && shifterButton != shifterButtonPrev) 
+		{
+			//toggle the shifter state (false means high gear!)
+			shifterState = !shifterState;
+		}
+		//now that the check is complete, store button value for next loop
+		shifterButtonPrev = shifterButton;
+		
+		if (shifterState)
+		{
+			//set to low gear
+			driveShifter.set(true);
+		} 
+		else 
+		{
+			//set to high gear
+			driveShifter.set(false);
 		}
 	}
 	
