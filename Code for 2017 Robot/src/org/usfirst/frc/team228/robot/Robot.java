@@ -73,7 +73,7 @@ public class Robot extends IterativeRobot
 	Encoder leftDriveEncoder, rightDriveEncoder;
 	//pneumatics (shifters)
 	Solenoid driveShifter;
-	boolean shifterState, shifterButtonPrev;
+	boolean shifterLowGear, shifterButtonPrev;
 		
 	//Drive Function
 	RobotDrive drivetrain;
@@ -84,11 +84,11 @@ public class Robot extends IterativeRobot
 	//Gear Manipulation
 	//Pincher
 	DoubleSolenoid pincher;
-	boolean pincherState; //true = pinching
+	boolean pincherClosed; //true = pinching
 	boolean pincherButtonPrev; //state of the button from last iteration
 	//Rotator, moves gear up/down
 	Solenoid gearRotator; 
-	boolean gearRotatorState; //true = rotator down
+	boolean gearRotatorDown; //true = rotator down
 	boolean gearRotatorButtonPrev; //state of the button from last iteration
 	//sensors
 	//DigitalInput gearDetectionLimitSwitch; //not currently initialized
@@ -99,17 +99,17 @@ public class Robot extends IterativeRobot
 	double feederMaxSpeed; //user input constant to control the speed of feederBelt
 	//human load gate
 	Solenoid HLGate;
-	boolean HLGateState; //true = human load gate open
+	boolean HLGateOpen; //true = human load gate open
 	boolean HLGateButtonPrev; //state of the button from last iteration
 	//dumper gate
 	Solenoid dumperGate;
-	boolean dumperState; //true = dumper gate open
+	boolean dumperGateOpen; //true = dumper gate open
 	boolean dumperButtonPrev; //state of the button from last iteration
 
 	//Shooter
 	//controllers (Talons)
 	CANTalon shooterMotor1,shooterMotor2,shooterMotor3;
-	boolean shooterState;
+	boolean shooterOn;
 	boolean shooterButtonPrev;
 	//constant for shooter speed
 	double OLShooterValue = 0.57; //"open loop shooter value" //no longer FINAL
@@ -188,7 +188,7 @@ public class Robot extends IterativeRobot
 		
 		//Assign drivetrain shifters
 		driveShifter = new Solenoid(0);
-		shifterState = false; //false means high gear
+		shifterLowGear = false; //false means high gear
 		shifterButtonPrev = false;
 
 		//Assign Drive Function
@@ -201,11 +201,11 @@ public class Robot extends IterativeRobot
 		//Gear Manipulation
 		//Assign Pincher
 		pincher = new DoubleSolenoid(2,3);
-		pincherState = false;
+		pincherClosed = false;
 		pincherButtonPrev = false;
 		//Assign Rotator
 		gearRotator = new Solenoid(4);
-		gearRotatorState = false;
+		gearRotatorDown = false;
 		gearRotatorButtonPrev = false;
 		
 		//Ball Manipulation
@@ -217,11 +217,11 @@ public class Robot extends IterativeRobot
 		SmartDashboard.putNumber("Feeder Max Speed", feederMaxSpeed); //put feederMaxSpeed on SDB
 		//Assign Human Load gate
 		HLGate = new Solenoid(5);
-		HLGateState = false;
+		HLGateOpen = false;
 		HLGateButtonPrev = false;
 		//Assign Dumper Gate
 		dumperGate = new Solenoid(6);
-		dumperState = false;
+		dumperGateOpen = false;
 		dumperButtonPrev = false;
 		
 		//Shooter
@@ -290,7 +290,7 @@ public class Robot extends IterativeRobot
 		shooterMotor3.setD(ShooterD); //the manual had these initialize to 0 but i wasn't sure
 		shooterMotor3.setIZone(ShooterIZone);
 		shooterButtonPrev = false;
-		shooterState = false;
+		shooterOn = false;
 		
 		//Assign Hanging motor controllers
 		hangingWinch = new VictorSP(6);
@@ -489,12 +489,12 @@ public class Robot extends IterativeRobot
 	{
 		//set all of the toggle states for everything to false
 		//this prevents unexpected movement on re-enable
-		//pincherState = false; //pincherState should not change actually
-		gearRotatorState = false;
-		HLGateState = false;
-		dumperState = false;
-		shooterState = false;
-		shifterState = false;
+		//pincherClosed = false; //pincherClosed should not change actually
+		gearRotatorDown = false;
+		HLGateOpen = false;
+		dumperGateOpen = false;
+		shooterOn = false;
+		shifterLowGear = false;
 		//hangFeedForward = false; //also not sure here
 		
 		//in case the robot was in test mode, shooter motor 1 and 2 may not be in follower mode anymore
@@ -528,12 +528,12 @@ public class Robot extends IterativeRobot
 		if (pincherButton && pincherButton != pincherButtonPrev)
 		{ 
 			//toggle the state of pincher
-			pincherState = !pincherState;
+			pincherClosed = !pincherClosed;
 		}
 		//now that check is complete, store value of pincherButton for next iteration of loop
 		pincherButtonPrev = pincherButton;
 
-		if (pincherState)
+		if (pincherClosed)
 		{
 			//ON: pinching/closed
 			pincher.set(DoubleSolenoid.Value.kForward);
@@ -555,12 +555,12 @@ public class Robot extends IterativeRobot
 		if (gearRotatorButton && gearRotatorButton != gearRotatorButtonPrev)
 		{ 
 			//toggle the state of gearRotator
-			gearRotatorState = !gearRotatorState;
+			gearRotatorDown = !gearRotatorDown;
 		}
 		//now that check is complete, store value of gearRotatorButton for next iteration of loop
 		gearRotatorButtonPrev = gearRotatorButton;
 
-		if (gearRotatorState)
+		if (gearRotatorDown)
 		{
 			//ON: gear rotator down
 			gearRotator.set(true);
@@ -639,12 +639,12 @@ public class Robot extends IterativeRobot
 		if (HLGateButton && HLGateButton != HLGateButtonPrev)
 		{ 
 			//toggle the state of HLGate
-			HLGateState = !HLGateState;
+			HLGateOpen = !HLGateOpen;
 		}
 		//now that check is complete, store value of HLGateButton for next iteration of loop
 		HLGateButtonPrev = HLGateButton;
 
-		if (HLGateState)
+		if (HLGateOpen)
 		{
 			//ON: open/no shoot state
 			HLGate.set(true);
@@ -666,12 +666,12 @@ public class Robot extends IterativeRobot
 		if (dumperButton && dumperButton != dumperButtonPrev)
 		{ 
 			//toggle the state of dumperGate
-			dumperState = !dumperState;
+			dumperGateOpen = !dumperGateOpen;
 		}
 		//now that check is complete, store value of dumperButton for next iteration of loop
 		dumperButtonPrev = dumperButton;
 
-		if (dumperState)
+		if (dumperGateOpen)
 		{
 			//dumperGate open/no shoot state
 			dumperGate.set(true);
@@ -695,12 +695,12 @@ public class Robot extends IterativeRobot
 		if (shifterButton && shifterButton != shifterButtonPrev) 
 		{
 			//toggle the shifter state (false means high gear!)
-			shifterState = !shifterState;
+			shifterLowGear = !shifterLowGear;
 		}
 		//now that the check is complete, store button value for next loop
 		shifterButtonPrev = shifterButton;
 		
-		if (shifterState)
+		if (shifterLowGear)
 		{
 			//set to low gear
 			driveShifter.set(true);
@@ -732,12 +732,12 @@ public class Robot extends IterativeRobot
 		//toggle shooter
 		if(shooterButton && shooterButton != shooterButtonPrev)
 		{
-			shooterState = !shooterState;
+			shooterOn = !shooterOn;
 		}
 		
 		shooterButtonPrev = shooterButton;
 		
-		if (shooterState) //if the shooter has toggled on
+		if (shooterOn) //if the shooter has toggled on
 		{
 			SmartDashboard.putBoolean("Shooter On", true); //indicate on dash that shooter is on
 			if (isPID) //if the PID check box on smartdashboard is on
