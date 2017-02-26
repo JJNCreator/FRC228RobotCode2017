@@ -664,12 +664,9 @@ public class Robot extends IterativeRobot
 			feedSpeed = 0;
 		}
 		
-		//run the intake
-		intakeBelt.set(intakeSpeed + (-1 * feedSpeed));
-		
 		//run the feeder
-		//if PID is on
-		if (SmartDashboard.getBoolean("Shooter PID on", false))
+		//if PID is on and shooter is on
+		if (SmartDashboard.getBoolean("Shooter PID on", false) && shooterOn)
 		{
 			//if shooter is stable at correct speed
 			if (mechanismStable(shooterMotor3.getClosedLoopError() < shooterErrorThreshold
@@ -677,16 +674,22 @@ public class Robot extends IterativeRobot
 			{
 				//run the feeder
 				feederBelt.set((-1*(intakeSpeed + feedSpeed))*feederMaxSpeed);
+				//run the intake
+				intakeBelt.set(intakeSpeed + (-1 * feedSpeed));
 			}
 			else
 				//don't run feeder
 				feederBelt.set(0);
+				//don't run the intake
+				intakeBelt.set(0);
 		}
-		//if not PID
+		//if not PID or shooter not on
 		else
 		{
 			//run the feeder
 			feederBelt.set((-1*(intakeSpeed + feedSpeed))*feederMaxSpeed);
+			//run the intake
+			intakeBelt.set(intakeSpeed + (-1 * feedSpeed));
 		}
 
 	}
