@@ -177,7 +177,7 @@ public class Robot extends IterativeRobot
 		
 		//Assign Gyro
 		robotGyro = new ADXRS450_Gyro();
-		SmartDashboard.putBoolean("Gyro Calibrate", true);
+		SmartDashboard.putBoolean("Gyro Calibrate", false);
 		
 		//Drivetrain
 		//Assign drive motor controllers
@@ -271,9 +271,9 @@ public class Robot extends IterativeRobot
 		// These aggressive PID settings are what we tried last.
 		// Experimentation is still needed.
 		ShooterP = 10;
-		ShooterI = 0.02;
-		ShooterD = 125;
-		ShooterIZone = 20;
+		ShooterI = 0.03;
+		ShooterD = 250;
+		ShooterIZone = 5;
 		
 		//display target rpm, F, P, I, and D
 		SmartDashboard.putNumber("Shooter Target", ShooterTarget);
@@ -312,6 +312,17 @@ public class Robot extends IterativeRobot
 	 */
 	public void robotPeriodic()
 	{
+		//Put mechanism on/off values on SDB
+		SmartDashboard.putBoolean("Drivetrain Low Gear", shifterLowGear);
+		SmartDashboard.putBoolean("Pincher Closed", pincherClosed);
+		SmartDashboard.putBoolean("Gear Down", gearRotatorDown);
+		SmartDashboard.putBoolean("Human Gate Open", HLGateOpen);
+		SmartDashboard.putBoolean("Dumper Open", dumperGateOpen);
+		SmartDashboard.putBoolean("Shooter", shooterOn);
+		SmartDashboard.putBoolean("Winch Feed Forward", hangFeedForward);
+		//put on SDB whether it's set to practice robot
+		SmartDashboard.putBoolean("Practice Robot Mode", isPracticeRobot);
+		
 		//Get shooter constant from user on SmartDashboard
 		//OLShooterValue = SmartDashboard.getNumber("Shooter constant", OLShooterValue);
 		
@@ -494,7 +505,7 @@ public class Robot extends IterativeRobot
 		HLGateOpen = false;
 		dumperGateOpen = false;
 		shooterOn = false;
-		shifterLowGear = false;
+		//shifterLowGear = false;
 		//hangFeedForward = false; //also not sure here
 		
 		//in case the robot was in test mode, shooter motor 1 and 2 may not be in follower mode anymore
@@ -739,7 +750,7 @@ public class Robot extends IterativeRobot
 		
 		if (shooterOn) //if the shooter has toggled on
 		{
-			SmartDashboard.putBoolean("Shooter On", true); //indicate on dash that shooter is on
+			//SmartDashboard.putBoolean("Shooter On", true); //indicate on dash that shooter is on //this is now in robotPeriodic
 			if (isPID) //if the PID check box on smartdashboard is on
 			{
 				//get latest constants from SmartDashboard
@@ -774,7 +785,7 @@ public class Robot extends IterativeRobot
 		else
 		{
 			//change talon to open-loop mode, set to off
-			SmartDashboard.putBoolean("Shooter On", false);
+			//SmartDashboard.putBoolean("Shooter On", false); //like above, this is now in robotPeriodic
 			shooterMotor3.changeControlMode(TalonControlMode.PercentVbus);
 			shooterMotor3.set(0.0);
 		}
