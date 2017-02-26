@@ -116,6 +116,8 @@ public class Robot extends IterativeRobot
 	//target value for shooter speed, and constants for FPID
 	double ShooterTarget, ShooterF, ShooterP, ShooterI, ShooterD;
 	int ShooterIZone;
+	//timer for how long error is below threshold
+	Timer errorTimer;
 	
 	//Hanging
 	//motor controllers
@@ -233,6 +235,8 @@ public class Robot extends IterativeRobot
 		shooterMotor1 = new CANTalon(1); //verify IDs
 		shooterMotor2 = new CANTalon(2); 
 		shooterMotor3 = new CANTalon(3);
+		//timer for how long error is below threshold
+		errorTimer = new Timer();
 		
 		shooterMotor3.setFeedbackDevice(FeedbackDevice.QuadEncoder);
 		//set other Talons to follow - verify correct numbers for everything
@@ -799,6 +803,52 @@ public class Robot extends IterativeRobot
 			shooterMotor3.changeControlMode(TalonControlMode.PercentVbus);
 			shooterMotor3.set(0.0);
 		}
+	}
+	
+	/**This method will take a boolean (that is, if the absolute value error of the shooter
+	 * is under a certain threshold), and if true (that is, the error is under that threshold),
+	 * it will start a timer. If the timer reaches a certain amount of time (indicating the shooter
+	 * is stable at the desired speed), the method will return true. If the timer has not reached
+	 * that time, the method will return false. If the input boolean is false (that is, the error is
+	 * over the threshold), the timer will stop, then reset, and the method will return false.
+	 * 
+	 * the return value of the method will be used to determine whether the shooter feed will run.
+	 * @param isLowError
+	 * @return
+	 */
+	public boolean feedDelay(boolean isLowError)
+	{
+		//if the error is below threshold
+		if (isLowError)
+		{
+			//if the timer has not started (it will be 0)
+			if (errorTimer.get() == 0.0)
+			{
+				errorTimer.start();
+			}
+			//if timer is under 0.25s
+			if (errorTimer.get() > 0.25)
+			{
+				//run feeder
+				return true;
+			}
+			//if the error is above threshold and timer is not < 0.25s
+			else
+			{
+				//don't run feeder
+				return false;
+			}
+		}
+		else
+		{
+			//stop the timer
+			errorTimer.stop();
+			//reset the timer
+			errorTimer.reset();
+			//run the feeder
+			return false;
+		}
+		
 	}
 	
 	/** 
