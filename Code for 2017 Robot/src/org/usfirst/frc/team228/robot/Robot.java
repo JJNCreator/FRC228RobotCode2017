@@ -839,6 +839,7 @@ public class Robot extends IterativeRobot
 				return false;
 			}
 		}
+		//if the error is not below threshold
 		else
 		{
 			//stop the timer
