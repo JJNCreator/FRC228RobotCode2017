@@ -119,9 +119,9 @@ public class Robot extends IterativeRobot
 	//timer for how long error is below threshold
 	Timer errorTimer;
 	//threshold for shooter speed error - the feeder will run when under this error for a set time
-	double shooterErrorThreshold;
+	double shooterErrorThreshold = 3.0;
 	//the amount of time the shooter speed must be within the error threshold to be considered stable
-	double shooterTimeDelay = 0.25;
+	double shooterTimeDelay = 0.05;
 	
 	//Hanging
 	//motor controllers
@@ -153,7 +153,7 @@ public class Robot extends IterativeRobot
 		SmartDashboard.putNumber("Shooter constant", OLShooterValue);
 		//get user input for constant, assign to OLShooterValue
 		//puts a boolean (which becomes checkbox) on SmartDashboard
-		SmartDashboard.putBoolean("Shooter PID on", false);
+		SmartDashboard.putBoolean("Shooter PID on", true);
 		//put error threshold for shooter speed to check to run feeder
 		SmartDashboard.putNumber("Shooter Speed Error Threshold", shooterErrorThreshold);
 		//put shooter time delay on SDB
