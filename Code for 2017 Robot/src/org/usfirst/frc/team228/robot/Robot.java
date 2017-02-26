@@ -4,6 +4,7 @@ import com.ctre.CANTalon;
 import com.ctre.CANTalon.FeedbackDevice;
 import com.ctre.CANTalon.TalonControlMode;
 import edu.wpi.first.wpilibj.ADXRS450_Gyro;
+import edu.wpi.first.wpilibj.CameraServer;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 //import edu.wpi.first.wpilibj.DigitalInput;
@@ -147,6 +148,9 @@ public class Robot extends IterativeRobot
 	public void robotInit()
 	{
 	//Robot Init - Put Things on SmartDashboard and Assign Everything
+		
+		//camera
+		CameraServer.getInstance().startAutomaticCapture();
 		
 		//Shooter
 		//put shooter constant data
