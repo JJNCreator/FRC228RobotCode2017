@@ -664,7 +664,7 @@ public class Robot extends IterativeRobot
 			feedSpeed = 0;
 		}
 		
-		//run the feeder
+		//run the feeder and intake
 		//if PID is on and shooter is on
 		if (SmartDashboard.getBoolean("Shooter PID on", false) && shooterOn)
 		{
@@ -678,10 +678,12 @@ public class Robot extends IterativeRobot
 				intakeBelt.set(intakeSpeed + (-1 * feedSpeed));
 			}
 			else
+			{
 				//don't run feeder
 				feederBelt.set(0);
 				//don't run the intake
 				intakeBelt.set(0);
+			}
 		}
 		//if not PID or shooter not on
 		else
