@@ -190,6 +190,10 @@ public class Robot extends IterativeRobot
 		driveShifter = new Solenoid(0);
 		shifterLowGear = false; //false means high gear
 		shifterButtonPrev = false;
+		
+		//Assign drivetrain encoders
+		leftDriveEncoder = new Encoder(0, 1, false); //the boolean is to indicate if it is backward
+		rightDriveEncoder = new Encoder(2, 3, false);
 
 		//Assign Drive Function
 		drivetrain = new RobotDrive(leftDrive1, leftDrive2, rightDrive1, rightDrive2);
@@ -348,6 +352,10 @@ public class Robot extends IterativeRobot
 		//zeros gyro. also ensures gyro finishes calibrating before continuing.
 		robotGyro.reset();
 		
+		//reset encoders
+		leftDriveEncoder.reset();
+		rightDriveEncoder.reset();
+		
 		//starting the timer after the gyro ensures auto runs for correct length even if delayed
 		autoTimer.reset();
 		autoTimer.start();
@@ -412,6 +420,8 @@ public class Robot extends IterativeRobot
 		drivetrain.arcadeDrive(0.0, 0.0);
 		//check gyro
 		System.out.println(robotGyro.getAngle());
+		System.out.println(leftDriveEncoder.get());
+		System.out.println(rightDriveEncoder.get());
 		//wait .1s
 		Timer.delay(0.1);
 	}
