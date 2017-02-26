@@ -118,6 +118,8 @@ public class Robot extends IterativeRobot
 	int ShooterIZone;
 	//timer for how long error is below threshold
 	Timer errorTimer;
+	//threshold for shooter speed error - the feeder will run when under this error for a set time
+	double shooterErrorThreshold;
 	
 	//Hanging
 	//motor controllers
@@ -150,6 +152,9 @@ public class Robot extends IterativeRobot
 		//get user input for constant, assign to OLShooterValue
 		//puts a boolean (which becomes checkbox) on SmartDashboard
 		SmartDashboard.putBoolean("Shooter PID on", false);
+		//put error threshold for shooter speed to check to run feeder
+		SmartDashboard.putNumber("Shooter Speed Error Threshold", shooterErrorThreshold);
+		
 		
 		//Assign Chooser for Autonomous programs
 		autoChooser = new SendableChooser<String>();
@@ -258,10 +263,10 @@ public class Robot extends IterativeRobot
 		//default RPM, F, P, I, D values, write these in once known
 		
 		//Shooter Target setting for point-blank shot, may add additional points later
-		ShooterTarget = 184;
+		ShooterTarget = 195;
 		
 		//Shooter Feed Forward experimentally determined, should probably never change
-		ShooterF = 3.15;
+		ShooterF = 3.0;
 		
 		//PID AND IZONE SETTINGS 
 		/** Below are some workable but conservative values
@@ -280,7 +285,7 @@ public class Robot extends IterativeRobot
 		// Experimentation is still needed.
 		ShooterP = 10;
 		ShooterI = 0.03;
-		ShooterD = 250;
+		ShooterD = 260;
 		ShooterIZone = 5;
 		
 		//display target rpm, F, P, I, and D
@@ -640,7 +645,11 @@ public class Robot extends IterativeRobot
 	public void intakeAndFeedBalls(double intakeSpeed, double feedSpeed)
 	{
 		//get user input for Feeder Max Speed
-		feederMaxSpeed = SmartDashboard.getNumber("Feeder Max Speed", feederMaxSpeed);		
+		feederMaxSpeed = SmartDashboard.getNumber("Feeder Max Speed", feederMaxSpeed);	
+		
+		//get error threshold for shooter speed to check to run feeder
+		shooterErrorThreshold = SmartDashboard.getNumber("Shooter Speed Error Threshold", shooterErrorThreshold);
+		
 		//eliminates deadband caused by cheapo xbox controllers
 		if (intakeSpeed > -0.1 && intakeSpeed < 0.1) 
 		{
@@ -650,8 +659,32 @@ public class Robot extends IterativeRobot
 		{
 			feedSpeed = 0;
 		}
+		
+		//run the intake
 		intakeBelt.set(intakeSpeed + (-1 * feedSpeed));
-		feederBelt.set((-1*(intakeSpeed + feedSpeed))*feederMaxSpeed);
+		
+		//run the feeder
+		//if PID is on
+		if (SmartDashboard.getBoolean("Shooter PID on", false))
+		{
+			//if shooter is stable at correct speed
+			if (mechanismStable(shooterMotor3.getClosedLoopError() < shooterErrorThreshold
+					&& shooterMotor3.getClosedLoopError() > (shooterErrorThreshold*-1)))
+			{
+				//run the feeder
+				feederBelt.set((-1*(intakeSpeed + feedSpeed))*feederMaxSpeed);
+			}
+			else
+				//don't run feeder
+				feederBelt.set(0);
+		}
+		//if not PID
+		else
+		{
+			//run the feeder
+			feederBelt.set((-1*(intakeSpeed + feedSpeed))*feederMaxSpeed);
+		}
+
 	}
 
 	/**
@@ -816,7 +849,7 @@ public class Robot extends IterativeRobot
 	 * @param isLowError
 	 * @return
 	 */
-	public boolean feedDelay(boolean isLowError)
+	public boolean mechanismStable(boolean isLowError)
 	{
 		//if the error is below threshold
 		if (isLowError)
