@@ -190,6 +190,8 @@ public class Robot extends IterativeRobot
 		driveShifter = new Solenoid(0);
 		shifterLowGear = false; //false means high gear
 		shifterButtonPrev = false;
+		//display Low Gear status on SDB
+		SmartDashboard.putBoolean("Low Gear", shifterLowGear);
 
 		//Assign Drive Function
 		drivetrain = new RobotDrive(leftDrive1, leftDrive2, rightDrive1, rightDrive2);
@@ -625,7 +627,9 @@ public class Robot extends IterativeRobot
 		{
 			feedSpeed = 0;
 		}
+		//run intake
 		intakeBelt.set(intakeSpeed + (-1 * feedSpeed));
+		//run feeder belt
 		feederBelt.set((-1*(intakeSpeed + feedSpeed))*feederMaxSpeed);
 	}
 
@@ -710,6 +714,9 @@ public class Robot extends IterativeRobot
 			//set to high gear
 			driveShifter.set(false);
 		}
+		
+		//put value of shifterLowGear on SDB
+		SmartDashboard.putBoolean("Low Gear", shifterLowGear);
 	}
 	
 	/**
