@@ -860,7 +860,7 @@ public class Robot extends IterativeRobot
 				errorTimer.start();
 			}
 			//if timer is under 0.25s
-			if (errorTimer.get() > 0.25)
+			if (errorTimer.get() > 0.125)
 			{
 				//run feeder
 				return true;
