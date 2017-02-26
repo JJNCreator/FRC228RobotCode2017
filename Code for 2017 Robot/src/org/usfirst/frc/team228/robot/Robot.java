@@ -232,7 +232,7 @@ public class Robot extends IterativeRobot
 		//Assign belt motor controllers
 		intakeBelt = new VictorSP(4); //ball intake
 		feederBelt = new VictorSP(5); //shooter feed belt
-		feederMaxSpeed = 0.8; //arbitrary starting value
+		feederMaxSpeed = 1.0; //arbitrary starting value
 		SmartDashboard.putNumber("Feeder Max Speed", feederMaxSpeed); //put feederMaxSpeed on SDB
 		//Assign Human Load gate
 		HLGate = new Solenoid(5);
@@ -274,7 +274,7 @@ public class Robot extends IterativeRobot
 		ShooterTarget = 195;
 		
 		//Shooter Feed Forward experimentally determined, should probably never change
-		ShooterF = 3.0;
+		ShooterF = 2.9;
 		
 		//PID AND IZONE SETTINGS 
 		/** Below are some workable but conservative values
