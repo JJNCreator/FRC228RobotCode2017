@@ -193,7 +193,7 @@ public class Robot extends IterativeRobot
 		
 		//Assign drivetrain encoders
 		leftDriveEncoder = new Encoder(0, 1, false); //the boolean is to indicate if it is backward
-		rightDriveEncoder = new Encoder(2, 3, false);
+		rightDriveEncoder = new Encoder(2, 3, true); //one should always be backward of the other
 
 		//Assign Drive Function
 		drivetrain = new RobotDrive(leftDrive1, leftDrive2, rightDrive1, rightDrive2);
