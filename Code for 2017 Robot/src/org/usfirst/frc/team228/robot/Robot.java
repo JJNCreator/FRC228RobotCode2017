@@ -7,16 +7,12 @@ import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 import edu.wpi.first.wpilibj.CameraServer;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
-//import edu.wpi.first.wpilibj.DigitalInput;
 import edu.wpi.first.wpilibj.Encoder;
-//import edu.wpi.first.wpilibj.GenericHID.Hand; //probably don't need
 import edu.wpi.first.wpilibj.IterativeRobot;
-//import edu.wpi.first.wpilibj.Joystick; //probably don't need
 import edu.wpi.first.wpilibj.RobotDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.Solenoid;
-//import edu.wpi.first.wpilibj.TalonSRX;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.VictorSP; //not victor like we thought
 import edu.wpi.first.wpilibj.XboxController;
@@ -92,8 +88,6 @@ public class Robot extends IterativeRobot
 	Solenoid gearRotator; 
 	boolean gearRotatorDown; //true = rotator down
 	boolean gearRotatorButtonPrev; //state of the button from last iteration
-	//sensors
-	//DigitalInput gearDetectionLimitSwitch; //not currently initialized
 	
 	//Ball Manipulation
 	//Feeder and Intake
@@ -350,13 +344,6 @@ public class Robot extends IterativeRobot
 		//put on SDB whether it's set to practice robot
 		SmartDashboard.putBoolean("Practice Robot Mode", isPracticeRobot);
 		
-		//Get shooter constant from user on SmartDashboard
-		//OLShooterValue = SmartDashboard.getNumber("Shooter constant", OLShooterValue);
-		
-		//this might be messing up SmartDashboard
-		//SmartDashboard.putData("Auto Choices", autoChooser);
-		//SmartDashboard.putData("Drive Choices", driveChooser);
-		
 		//checks if gyro calibration check box is on
 		calGyro = SmartDashboard.getBoolean("Gyro Calibrate", true);
 
@@ -409,49 +396,6 @@ public class Robot extends IterativeRobot
 	}
 	/**This scores a gear on a peg directly in front of the robot.
 	*/
-	
-	/*public void centerGearAuto()
-	{
-		//proportional constant to account for gyro
-		final double gyroP = -0.195; 
-		final double targetDistance = 74;
-		
-		driveShifter.set(true); //low gear
-		//get average value of both encoders to get distance
-		double averageDistance = (leftDriveEncoder.getDistance() + rightDriveEncoder.getDistance()) / 2;
-		System.out.println(averageDistance);
-		if (averageDistance < targetDistance)
-		{
-			drivetrain.arcadeDrive(-0.6, robotGyro.getAngle()*gyroP);
-		}
-		else if (averageDistance > targetDistance + 5)
-		{
-			drivetrain.arcadeDrive(0.6, 0);
-		}
-		else if (reachedTargetTime == 999.0)
-		{
-			drivetrain.arcadeDrive(0, 0);
-			reachedTargetTime = autoTimer.get();
-			System.out.println("Auto Timer" + autoTimer.get());
-		}
-		else if (autoTimer.get() > reachedTargetTime + 1)
-		{
-				pincher.set(DoubleSolenoid.Value.kReverse);
-			if (autoTimer.get() < reachedTargetTime + 3)
-			{
-				drivetrain.arcadeDrive(0.6, 0);
-			}
-			else
-			{
-				drivetrain.arcadeDrive(0, 0);
-			}
-		}
-		else
-		{
-			drivetrain.arcadeDrive(0,0);
-		}
-			
-	}*/
 	
 	public void gearAuto(String sideOfField)
 	{
@@ -638,21 +582,12 @@ public class Robot extends IterativeRobot
 			break;
 		}
 		
-		//the code below duplicates what is already shown on the driver station?
-		//SmartDashboard.putNumber("XAxisRightJoystick", driverController.getRawAxis(4));
-		//SmartDashboard.putNumber("YAxisLeftJoystick", driverController.getRawAxis(1));
-		
 		//OPERATOR CONTROLS
 		//Pincher: toggle  with B (DoubleSolenoid.Value.kForward = closed, ...kReverse = open)
 		pincherControl(operatorController.getBButton());
 
 		//Gear Rotator: toggle with A (on/down)/(DEFAULT: off/up)
 		gearRotatorControl(operatorController.getAButton());
-
-		//Ball Intake: left trigger
-		//intakeBalls(operatorController.getRawAxis(2));
-		//Ball Feeding: left joystick y axis
-		//feedBalls(operatorController.getRawAxis(1));
 		
 		//Ball intake and feed combined function, left trigger and left joystick y axis
 		intakeAndFeedBalls(operatorController.getRawAxis(2), operatorController.getRawAxis(1));
@@ -764,39 +699,6 @@ public class Robot extends IterativeRobot
 		}
 	}	
 	
-	/** 
-	* This function controls the belt mechanisms when picking up off the floor
-	* intakeSpeed is expected to be between 0 and 1
-	* This allows a trigger value to be passed into it, for example
-	*/
-	
-	//This function did not work when feedBalls was run in the same loop
-	//They would overwrite the commands of each other and it caused problems
-	//new combined function located below
-	/*
-	public void intakeBalls(double intakeSpeed)
-	{
-		//intake should go in, feeder should go OUT 
-		//since intake and feeder gearboxes run opposite, pass the SAME value to both
-		intakeBelt.set(intakeSpeed);
-		feederBelt.set(-1 * intakeSpeed);
-	}
-	*/
-	/** 
-	* This function controls the belt mechanisms when feeding the shooter
-	* feedSpeed is expected to be between -1 and 1
-	* This allows a joystick value to be passed into it, for example
-	* @param feedSpeed
-	*/
-	/*
-	public void feedBalls(double feedSpeed)
-	{
-		//intake and feeder gearboxes run in opposite directions, so one must be reversed
-		//if this is backward, move -1 component to other one
-		intakeBelt.set(-1 * feedSpeed);
-		feederBelt.set(-1 * feedSpeed);
-	}
-	*/
 	/**
 	* This function is a copy of both the intake and feed functions, put together.
 	* This prevents conflicts between the two.
