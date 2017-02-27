@@ -40,8 +40,9 @@ public class Robot extends IterativeRobot
 	
 	//Auto Selection
 	final String defaultAuto = "Do nothing";
-	final String customAuto = "Custom Auto";
+	final String centerGearAuto = "Center Gear Auto";
 	final String gyroAuto = "Gyro Test Auto";
+	final String rightGearAuto = "Right Gear Auto";
 	//user's autonomous selection
 	String autoSelected;
 	//autonomous selector
@@ -136,6 +137,8 @@ public class Robot extends IterativeRobot
 	
 	//Counts time elapsed while in autonomous
 	Timer autoTimer;
+	int gearAutonCase = 0;
+	double reachedTargetTime = 999;
 	
 	//example for toggling buttons
 	//boolean exampleState; //when true, will do the thing on the robot 
@@ -174,7 +177,8 @@ public class Robot extends IterativeRobot
 		
 		//Put Autonomous Chooser
 		autoChooser.addDefault("Auto nothing", defaultAuto);
-		autoChooser.addObject("Auto custom", customAuto);
+		autoChooser.addObject("Center Gear", centerGearAuto);
+		autoChooser.addObject("Right Gear", rightGearAuto);
 		autoChooser.addObject("Gyro Test Auto", gyroAuto);
 		SmartDashboard.putData("Auto Choices", autoChooser);
 
@@ -209,6 +213,8 @@ public class Robot extends IterativeRobot
 		//Assign drivetrain encoders
 		leftDriveEncoder = new Encoder(0, 1, false); //the boolean is to indicate if it is backward
 		rightDriveEncoder = new Encoder(2, 3, true); //one should always be backward of the other
+		leftDriveEncoder.setDistancePerPulse(0.0222);//one pulse is 1/45 of an inch
+		rightDriveEncoder.setDistancePerPulse(0.0222);
 
 		//Assign Drive Function
 		drivetrain = new RobotDrive(leftDrive1, leftDrive2, rightDrive1, rightDrive2);
@@ -386,8 +392,11 @@ public class Robot extends IterativeRobot
 	{
 		switch(autoSelected)
 		{
-		case customAuto:
-			testAuto();   
+		case centerGearAuto:
+			gearAuto("Center");   
+			break;
+		case rightGearAuto:
+			gearAuto("Right");
 			break;
 		case gyroAuto:
 			gyroTestAuto();
@@ -398,32 +407,171 @@ public class Robot extends IterativeRobot
 			break;
 		}
 	}
-	/**Haley and Chris Auto Test
-	 * designed to be identical in behavior to CustomAuto 
-	 * but written in a more robust way as an example for programming team
+	/**This scores a gear on a peg directly in front of the robot.
 	*/
 	
-	public void testAuto()
+	/*public void centerGearAuto()
 	{
-		//Timer.getMatchTime() wasn't working, is now autoTimer.get()
-		//0s: forward
-		//2s: half speed
-		//4s: stop
+		//proportional constant to account for gyro
+		final double gyroP = -0.195; 
+		final double targetDistance = 74;
 		
-		//at 0s: drive forward for 2 seconds
-		if (autoTimer.get() < 2)
+		driveShifter.set(true); //low gear
+		//get average value of both encoders to get distance
+		double averageDistance = (leftDriveEncoder.getDistance() + rightDriveEncoder.getDistance()) / 2;
+		System.out.println(averageDistance);
+		if (averageDistance < targetDistance)
 		{
-			drivetrain.arcadeDrive(1.0, 0.0);
+			drivetrain.arcadeDrive(-0.6, robotGyro.getAngle()*gyroP);
 		}
-		//at 2s: drive half speed for 2 seconds
-		else if (autoTimer.get() < 4)
+		else if (averageDistance > targetDistance + 5)
 		{
-			drivetrain.arcadeDrive(0.5, 0.0);
+			drivetrain.arcadeDrive(0.6, 0);
 		}
-		//at 4s: stop
-		else //(autoTimer.get() > 4)
+		else if (reachedTargetTime == 999.0)
 		{
-			drivetrain.arcadeDrive(0.0, 0.0);
+			drivetrain.arcadeDrive(0, 0);
+			reachedTargetTime = autoTimer.get();
+			System.out.println("Auto Timer" + autoTimer.get());
+		}
+		else if (autoTimer.get() > reachedTargetTime + 1)
+		{
+				pincher.set(DoubleSolenoid.Value.kReverse);
+			if (autoTimer.get() < reachedTargetTime + 3)
+			{
+				drivetrain.arcadeDrive(0.6, 0);
+			}
+			else
+			{
+				drivetrain.arcadeDrive(0, 0);
+			}
+		}
+		else
+		{
+			drivetrain.arcadeDrive(0,0);
+		}
+			
+	}*/
+	
+	public void gearAuto(String sideOfField)
+	{
+		final double gyroP = -0.195;
+		final double targetDistance1 = 69;
+		final double targetAngleRight = -60;
+		final double targetAngleLeft = 60;
+		final double targetDistance2 = 74;
+		
+		driveShifter.set(true); // low gear
+		
+		double averageDistance = (leftDriveEncoder.getDistance() + rightDriveEncoder.getDistance()) / 2;
+		
+		switch(gearAutonCase)
+		{
+		case 0: //check which direction you're going
+			if (sideOfField == "Left" || sideOfField == "Right")
+			{
+				gearAutonCase++; //case 1 is either side case
+			}
+			else
+			{
+				gearAutonCase += 10; //case 2 is center gear auto case
+				//the case 1 step drives the left / right cases forward
+				//and turns them until they are in the center gear position
+			}
+			break;
+		case 1: //write this later
+			if (averageDistance < targetDistance1)
+			{
+				drivetrain.arcadeDrive(-0.6, robotGyro.getAngle() * gyroP);
+			}
+			else if (averageDistance > targetDistance1 + 4)
+			{
+				drivetrain.arcadeDrive(0.6, robotGyro.getAngle() * gyroP);
+			}
+			else
+			{
+				gearAutonCase++;
+			}
+			break;
+		case 2: //spin a certain angle
+			if (sideOfField == "Right") //if sideOfField == "Right"
+			{
+				System.out.println(robotGyro.getAngle());
+				if (robotGyro.getAngle() > targetAngleRight)
+				{
+					drivetrain.arcadeDrive(0, -0.75);
+				}
+				else if (robotGyro.getAngle() < targetAngleRight - 1)
+				{
+					drivetrain.arcadeDrive(0, +0.75);
+				}
+				else
+				{
+					System.out.println("Got to this part");
+					robotGyro.reset();
+					leftDriveEncoder.reset();
+					rightDriveEncoder.reset();
+					drivetrain.arcadeDrive(0, 0);
+					gearAutonCase = 10; //change to ++ later
+				}
+			}
+			if (sideOfField == "Left")
+			{
+				System.out.println(robotGyro.getAngle());
+				if (robotGyro.getAngle() < targetAngleLeft)
+				{
+					drivetrain.arcadeDrive(0, 0.75);
+				}
+				else if (robotGyro.getAngle() > targetAngleLeft + 1)
+				{
+					drivetrain.arcadeDrive(0, -0.75);
+				}
+				else
+				{
+					System.out.println("Got to this part");
+					robotGyro.reset();
+					leftDriveEncoder.reset();
+					rightDriveEncoder.reset();
+					drivetrain.arcadeDrive(0, 0);
+					gearAutonCase = 10; //change to ++ later
+				}
+			}
+			break;
+		case 10: //drive to target distance
+			if (averageDistance < targetDistance2)
+			{
+				drivetrain.arcadeDrive(-0.6, robotGyro.getAngle() * gyroP);
+			}
+			else if (averageDistance > targetDistance2 + 4)
+			{
+				drivetrain.arcadeDrive(0.6, robotGyro.getAngle() * gyroP);
+			}
+			else
+			{
+				drivetrain.arcadeDrive(0, 0);
+				reachedTargetTime = autoTimer.get();
+				gearAutonCase++; //move on to the next round!
+			}
+			break;
+		case 11: //after waiting 1 second, drop the thing, after 2, drive back, after 3, advance
+			if (autoTimer.get() > reachedTargetTime + 1)
+			{
+				pincher.set(DoubleSolenoid.Value.kReverse);
+			}
+			if (autoTimer.get() > reachedTargetTime + 2)
+			{
+				drivetrain.arcadeDrive(0.6, robotGyro.getAngle() * gyroP);
+			}
+			if (autoTimer.get() > reachedTargetTime + 3)
+			{
+				drivetrain.arcadeDrive(0, 0);
+				gearAutonCase++;
+			}
+			break;
+		case 12:
+		default:
+			drivetrain.arcadeDrive(0, 0);
+			break;
 		}
 	}
 	
@@ -541,6 +689,11 @@ public class Robot extends IterativeRobot
 		shooterMotor2.set(shooterMotor3.getDeviceID());
 		shooterMotor1.changeControlMode(CANTalon.TalonControlMode.Follower);
 		shooterMotor1.set(shooterMotor3.getDeviceID());
+		
+		//set auton variables back to default
+		//clean up later
+		reachedTargetTime = 999;
+		gearAutonCase = 0;
 	}
 	
 	/**
@@ -554,6 +707,7 @@ public class Robot extends IterativeRobot
 			//calibrate the gyro
 			robotGyro.calibrate();
 		}
+		//reachedTargetTime = 999; // bug fix for auto ask chris sorry
 	}
 
 	/**
