@@ -30,7 +30,7 @@ public class Robot extends IterativeRobot
 	//PRE INIT - Create variables
 	
 	//ATTENTION!
-	final boolean isPracticeRobot = true; //for later
+	final boolean isPracticeRobot = false; //for later
 	
 	Preferences robotPrefs;
 	
@@ -39,6 +39,7 @@ public class Robot extends IterativeRobot
 	final String centerGearAuto = "Center Gear Auto";
 	final String gyroAuto = "Gyro Test Auto";
 	final String rightGearAuto = "Right Gear Auto";
+	final String leftGearAuto = "Left Gear Auto";
 	//user's autonomous selection
 	String autoSelected;
 	//autonomous selector
@@ -61,6 +62,7 @@ public class Robot extends IterativeRobot
 	Compressor compressor;
 	
 	//Gyro
+
 	ADXRS450_Gyro robotGyro;
 	boolean calGyro; //true = gyro will calibrate
 	
@@ -147,7 +149,10 @@ public class Robot extends IterativeRobot
 	//Robot Init - Put Things on SmartDashboard and Assign Everything
 		
 		//camera
-		CameraServer.getInstance().startAutomaticCapture();
+		if (isPracticeRobot)
+			{
+			CameraServer.getInstance().startAutomaticCapture();
+			}
 		
 		//Shooter
 		//put shooter constant data
@@ -173,6 +178,7 @@ public class Robot extends IterativeRobot
 		autoChooser.addDefault("Auto nothing", defaultAuto);
 		autoChooser.addObject("Center Gear", centerGearAuto);
 		autoChooser.addObject("Right Gear", rightGearAuto);
+		autoChooser.addObject("Left Gear", leftGearAuto);
 		autoChooser.addObject("Gyro Test Auto", gyroAuto);
 		SmartDashboard.putData("Auto Choices", autoChooser);
 
@@ -191,7 +197,6 @@ public class Robot extends IterativeRobot
 		//Assign Gyro
 		robotGyro = new ADXRS450_Gyro();
 		SmartDashboard.putBoolean("Gyro Calibrate", false);
-		
 		//Drivetrain
 		//Assign drive motor controllers
 		leftDrive1 = new VictorSP(0);
@@ -385,6 +390,9 @@ public class Robot extends IterativeRobot
 		case rightGearAuto:
 			gearAuto("Right");
 			break;
+		case leftGearAuto:
+			gearAuto("Left");
+			break;
 		case gyroAuto:
 			gyroTestAuto();
 			break;
@@ -403,7 +411,17 @@ public class Robot extends IterativeRobot
 		final double targetDistance1 = 69;
 		final double targetAngleRight = -60;
 		final double targetAngleLeft = 60;
-		final double targetDistance2 = 74;
+		final double targetDistanceTwo = 74;
+		double targetDistance2;
+		
+		if (sideOfField == "Left" || sideOfField == "Right")
+		{
+			targetDistance2 = targetDistanceTwo - 6;
+		}
+		else
+		{
+			targetDistance2 = targetDistanceTwo;
+		}
 		
 		driveShifter.set(true); // low gear
 		
@@ -426,11 +444,11 @@ public class Robot extends IterativeRobot
 		case 1: //write this later
 			if (averageDistance < targetDistance1)
 			{
-				drivetrain.arcadeDrive(-0.6, robotGyro.getAngle() * gyroP);
+				drivetrain.arcadeDrive(-0.7, robotGyro.getAngle() * gyroP);
 			}
 			else if (averageDistance > targetDistance1 + 4)
 			{
-				drivetrain.arcadeDrive(0.6, robotGyro.getAngle() * gyroP);
+				drivetrain.arcadeDrive(0.7, robotGyro.getAngle() * gyroP);
 			}
 			else
 			{
@@ -484,11 +502,11 @@ public class Robot extends IterativeRobot
 		case 10: //drive to target distance
 			if (averageDistance < targetDistance2)
 			{
-				drivetrain.arcadeDrive(-0.6, robotGyro.getAngle() * gyroP);
+				drivetrain.arcadeDrive(-0.7, robotGyro.getAngle() * gyroP);
 			}
 			else if (averageDistance > targetDistance2 + 4)
 			{
-				drivetrain.arcadeDrive(0.6, robotGyro.getAngle() * gyroP);
+				drivetrain.arcadeDrive(0.7, robotGyro.getAngle() * gyroP);
 			}
 			else
 			{
@@ -498,13 +516,13 @@ public class Robot extends IterativeRobot
 			}
 			break;
 		case 11: //after waiting 1 second, drop the thing, after 2, drive back, after 3, advance
-			if (autoTimer.get() > reachedTargetTime + 1)
+			if (autoTimer.get() > reachedTargetTime + 0.5)
 			{
 				pincher.set(DoubleSolenoid.Value.kReverse);
 			}
-			if (autoTimer.get() > reachedTargetTime + 2)
+			if (autoTimer.get() > reachedTargetTime + 1)
 			{
-				drivetrain.arcadeDrive(0.6, robotGyro.getAngle() * gyroP);
+				drivetrain.arcadeDrive(0.7, robotGyro.getAngle() * gyroP);
 			}
 			if (autoTimer.get() > reachedTargetTime + 3)
 			{
@@ -637,11 +655,8 @@ public class Robot extends IterativeRobot
 	public void disabledPeriodic()
 	{
 		//if "Gyro Calibrate" is checked
-		if (calGyro)
-		{
-			//calibrate the gyro
-			robotGyro.calibrate();
-		}
+		//calibrate the gyro
+		robotGyro.calibrate();
 		//reachedTargetTime = 999; // bug fix for auto ask chris sorry
 	}
 
