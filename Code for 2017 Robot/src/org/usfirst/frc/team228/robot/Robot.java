@@ -35,7 +35,7 @@ public class Robot extends IterativeRobot
 	Preferences robotPrefs;
 	
 	//Auto Selection
-	final String defaultAuto = "Do nothing";
+	final String defaultAuto = "Drive Forward";
 	final String centerGearAuto = "Center Gear Auto";
 	final String gyroAuto = "Gyro Test Auto";
 	final String rightGearAuto = "Right Gear Auto";
@@ -117,9 +117,9 @@ public class Robot extends IterativeRobot
 	//timer for how long error is below threshold
 	Timer errorTimer;
 	//threshold for shooter speed error - the feeder will run when under this error for a set time
-	double shooterErrorThreshold = 3.0;
+	double shooterErrorThreshold; //check robotinit for value
 	//the amount of time the shooter speed must be within the error threshold to be considered stable
-	double shooterTimeDelay = 0.05;
+	double shooterTimeDelay; //check robotinit for value
 	
 	//Hanging
 	//motor controllers
@@ -149,12 +149,13 @@ public class Robot extends IterativeRobot
 	//Robot Init - Put Things on SmartDashboard and Assign Everything
 		
 		//camera
-		if (isPracticeRobot)
-			{
-			CameraServer.getInstance().startAutomaticCapture();
-			}
+		CameraServer.getInstance().startAutomaticCapture();
 		
 		//Shooter
+		//threshold for shooter speed error - the feeder will run when under this error for a set time
+		shooterErrorThreshold = 20.0;
+		//the amount of time the shooter speed must be within the error threshold to be considered stable
+		shooterTimeDelay = 0.05;
 		//put shooter constant data
 		SmartDashboard.putNumber("Shooter constant", OLShooterValue);
 		//get user input for constant, assign to OLShooterValue
@@ -175,7 +176,7 @@ public class Robot extends IterativeRobot
 		//driveChooser = new SendableChooser();
 		
 		//Put Autonomous Chooser
-		autoChooser.addDefault("Auto nothing", defaultAuto);
+		autoChooser.addDefault("Drive Forward", defaultAuto);
 		autoChooser.addObject("Center Gear", centerGearAuto);
 		autoChooser.addObject("Right Gear", rightGearAuto);
 		autoChooser.addObject("Left Gear", leftGearAuto);
@@ -196,7 +197,7 @@ public class Robot extends IterativeRobot
 		
 		//Assign Gyro
 		robotGyro = new ADXRS450_Gyro();
-		SmartDashboard.putBoolean("Gyro Calibrate", false);
+		SmartDashboard.putBoolean("Gyro Calibrate", true);
 		//Drivetrain
 		//Assign drive motor controllers
 		leftDrive1 = new VictorSP(0);
@@ -225,7 +226,7 @@ public class Robot extends IterativeRobot
 		//Gear Manipulation
 		//Assign Pincher
 		pincher = new DoubleSolenoid(2,3);
-		pincherClosed = false;
+		pincherClosed = true; //this makes setting up auto easier
 		pincherButtonPrev = false;
 		//Assign Rotator
 		gearRotator = new Solenoid(4);
@@ -271,34 +272,15 @@ public class Robot extends IterativeRobot
 			shooterMotor3.reverseSensor(true);
 		}
 		
-		//internet told me to put this here for now?
-		
-		//default RPM, F, P, I, D values, write these in once known
-		
-		//Shooter Target setting for point-blank shot, may add additional points later
-		ShooterTarget = 195;
-		
-		//Shooter Feed Forward experimentally determined, should probably never change
-		ShooterF = 2.9;
-		
-		//PID AND IZONE SETTINGS 
-		/** Below are some workable but conservative values
-		ShooterP = 3.2;
-		ShooterI = 0.02;
-		ShooterD = 30;
-		ShooterIZone = 20; //integral error zone - ignores high error */
-		
-		/** These settings are a bit more aggressive. Might be slightly better than conservative settigs
-		ShooterP = 5;
-		ShooterI = 0.03;
-		ShooterD = 100;
-		ShooterIZone = 20;*/
+		//FPID, TargetAND IZONE SETTINGS 
 		
 		// These aggressive PID settings are what we tried last.
-		// Experimentation is still needed.
+		//Shooter Target setting for point-blank shot. Was 195 until recently
+		ShooterTarget = 190;
+		ShooterF = 2.9;
 		ShooterP = 10;
-		ShooterI = 0.03;
-		ShooterD = 260;
+		ShooterI = 0.04; //was 0.03
+		ShooterD = 300; //was 260, 450, 400
 		ShooterIZone = 5;
 		
 		//display target rpm, F, P, I, and D
@@ -313,7 +295,7 @@ public class Robot extends IterativeRobot
 		shooterMotor3.setF(ShooterF);
 		shooterMotor3.setP(ShooterP);
 		shooterMotor3.setI(ShooterI);
-		shooterMotor3.setD(ShooterD); //the manual had these initialize to 0 but i wasn't sure
+		shooterMotor3.setD(ShooterD);
 		shooterMotor3.setIZone(ShooterIZone);
 		shooterButtonPrev = false;
 		shooterOn = false;
@@ -397,11 +379,61 @@ public class Robot extends IterativeRobot
 			gyroTestAuto();
 			break;
 		case defaultAuto:
+			driveForwardAuto(80);
+			break; //80 inches is clearly forward of center peg
 		default:
 			drivetrain.arcadeDrive(0.0, 0.0); //prevents watchdog error
 			break;
 		}
 	}
+	/**This just drives forward for a set number of seconds.
+	* Never Tested!!!
+	*/
+	public void driveForwardAuto (double driveDistance)
+	{
+		final double gyroP = -0.195;
+		double averageDistance;
+		driveShifter.set(true);
+		
+		//if below code is uncommented, please comment this out
+		averageDistance = (leftDriveEncoder.getDistance() + rightDriveEncoder.getDistance()) / 2;
+		System.out.println(averageDistance);
+		//error handling for encoder - if one encoder is totally dead, autonomous won't totally fail
+		//TEST ME BEFORE UNCOMMENTING
+		/*
+		if (leftDriveEncoder.getDistance() == 0 && rightDriveEncoder.getDistance() > 6)
+		{
+			averageDistance = rightDriveEncoder.getDistance();
+		}
+		else if (rightDriveEncoder.getDistance() == 0 && leftDriveEncoder.getDistance > 6)
+		{
+			averageDistance = leftDriveEncoder.getDistance();
+		}
+		else
+		{
+			averageDistance = (leftDriveEncoder.getDistance() + rightDriveEncoder.getDistance()) / 2;
+		}
+		*/
+		switch (gearAutonCase) //yes I'm bad and should make a new variable
+		{
+		case 0:
+			if (averageDistance < driveDistance)
+			{
+				drivetrain.arcadeDrive(-0.7, robotGyro.getAngle() * gyroP);
+			}
+			else
+			{
+				gearAutonCase++;
+			}
+			break;
+		case 1:
+		default:
+			drivetrain.arcadeDrive(0, 0);
+			break;
+		}
+	}
+	
+	
 	/**This scores a gear on a peg directly in front of the robot.
 	*/
 	
@@ -411,12 +443,15 @@ public class Robot extends IterativeRobot
 		final double targetDistance1 = 69;
 		final double targetAngleRight = -60;
 		final double targetAngleLeft = 60;
-		final double targetDistanceTwo = 74;
+		final double targetDistanceTwo = 72; //was 74
 		double targetDistance2;
+		double averageDistance;
 		
+		//the side autos drive forward for a slightly shorter distance
+		//the adjustment is made here so it can be tweaked easily
 		if (sideOfField == "Left" || sideOfField == "Right")
 		{
-			targetDistance2 = targetDistanceTwo - 6;
+			targetDistance2 = targetDistanceTwo - 4; //was 6, adjusted based on adjusting two
 		}
 		else
 		{
@@ -425,7 +460,25 @@ public class Robot extends IterativeRobot
 		
 		driveShifter.set(true); // low gear
 		
-		double averageDistance = (leftDriveEncoder.getDistance() + rightDriveEncoder.getDistance()) / 2;
+		//if below code is uncommented, please comment this out
+		averageDistance = (leftDriveEncoder.getDistance() + rightDriveEncoder.getDistance()) / 2;
+		
+		//error handling for encoder - if one encoder is totally dead, autonomous won't totally fail
+		//TEST ME BEFORE UNCOMMENTING
+		/*
+		if (leftDriveEncoder.getDistance() == 0 && rightDriveEncoder.getDistance() > 6)
+		{
+			averageDistance = rightDriveEncoder.getDistance();
+		}
+		else if (rightDriveEncoder.getDistance() == 0 && leftDriveEncoder.getDistance > 6)
+		{
+			averageDistance = leftDriveEncoder.getDistance();
+		}
+		else
+		{
+			averageDistance = (leftDriveEncoder.getDistance() + rightDriveEncoder.getDistance()) / 2;
+		}
+		*/
 		
 		switch(gearAutonCase)
 		{
@@ -441,7 +494,8 @@ public class Robot extends IterativeRobot
 				//and turns them until they are in the center gear position
 			}
 			break;
-		case 1: //write this later
+		case 1: //for left-right auto, go straight out to rotation point
+				//this is an area that can be sped up but play with setpoints if you do
 			if (averageDistance < targetDistance1)
 			{
 				drivetrain.arcadeDrive(-0.7, robotGyro.getAngle() * gyroP);
@@ -456,6 +510,8 @@ public class Robot extends IterativeRobot
 			}
 			break;
 		case 2: //spin a certain angle
+		//i am pretty sure i could make a variable changing the sign of getAngle to make this work as 1 call 
+		//but that would require testing time we just don't have at the moment
 			if (sideOfField == "Right") //if sideOfField == "Right"
 			{
 				System.out.println(robotGyro.getAngle());
@@ -465,7 +521,7 @@ public class Robot extends IterativeRobot
 				}
 				else if (robotGyro.getAngle() < targetAngleRight - 1)
 				{
-					drivetrain.arcadeDrive(0, +0.75);
+					drivetrain.arcadeDrive(0, +0.75); //consider tuning this down a little
 				}
 				else
 				{
@@ -474,7 +530,7 @@ public class Robot extends IterativeRobot
 					leftDriveEncoder.reset();
 					rightDriveEncoder.reset();
 					drivetrain.arcadeDrive(0, 0);
-					gearAutonCase = 10; //change to ++ later
+					gearAutonCase = 10; 
 				}
 			}
 			if (sideOfField == "Left")
@@ -486,20 +542,20 @@ public class Robot extends IterativeRobot
 				}
 				else if (robotGyro.getAngle() > targetAngleLeft + 1)
 				{
-					drivetrain.arcadeDrive(0, -0.75);
+					drivetrain.arcadeDrive(0, -0.75); //consider tuning this down a little
 				}
 				else
 				{
 					System.out.println("Got to this part");
-					robotGyro.reset();
+					robotGyro.reset(); //ensures we are starting at zero for straight line auto
 					leftDriveEncoder.reset();
 					rightDriveEncoder.reset();
 					drivetrain.arcadeDrive(0, 0);
-					gearAutonCase = 10; //change to ++ later
+					gearAutonCase = 10; 
 				}
 			}
 			break;
-		case 10: //drive to target distance
+		case 10: //drive to target distance straight forward
 			if (averageDistance < targetDistance2)
 			{
 				drivetrain.arcadeDrive(-0.7, robotGyro.getAngle() * gyroP);
@@ -515,7 +571,7 @@ public class Robot extends IterativeRobot
 				gearAutonCase++; //move on to the next round!
 			}
 			break;
-		case 11: //after waiting 1 second, drop the thing, after 2, drive back, after 3, advance
+		case 11: //after waiting 0.5 second, drop the thing, after 1, drive back, after 2.5, advance
 			if (autoTimer.get() > reachedTargetTime + 0.5)
 			{
 				pincher.set(DoubleSolenoid.Value.kReverse);
@@ -524,13 +580,13 @@ public class Robot extends IterativeRobot
 			{
 				drivetrain.arcadeDrive(0.7, robotGyro.getAngle() * gyroP);
 			}
-			if (autoTimer.get() > reachedTargetTime + 3)
+			if (autoTimer.get() > reachedTargetTime + 2.5)
 			{
 				drivetrain.arcadeDrive(0, 0);
 				gearAutonCase++;
 			}
 			break;
-		case 12:
+		case 12: //if you get time, add a spin move to reach center field
 		default:
 			drivetrain.arcadeDrive(0, 0);
 			break;
@@ -591,7 +647,7 @@ public class Robot extends IterativeRobot
 			break;
 		case GTAMode:
 		default: //we needed a default case to prevent watchdog errors if smartdashboard didn't work
-			combinedTriggerValue = (-1 * driverController.getRawAxis(2) + driverController.getRawAxis(3));
+			combinedTriggerValue = (-1* Math.pow(driverController.getRawAxis(2),2) + Math.pow(driverController.getRawAxis(3),2));
 			drivetrain.arcadeDrive(combinedTriggerValue, driverController.getRawAxis(0));
 			//if we are in GTA mode, shifting is assigned to a face button instead
 			shifterControl(driverController.getAButton());
@@ -620,8 +676,8 @@ public class Robot extends IterativeRobot
 		shooterControl(operatorController.getRawButton(5), SmartDashboard.getBoolean("Shooter PID on", false)); //set to true for PID
 
 		//Hanging: right trigger passes for throttle value, X button toggles feed-forward on and off
-		//TEMPORARILY CHANGED TO RIGHT STICK (3 is right button)
-		hangingControl(operatorController.getRawAxis(5), operatorController.getXButton());
+		//TEMPORARILY CHANGED TO RIGHT STICK with 5 (3 is right button)
+		hangingControl(operatorController.getRawAxis(3), operatorController.getXButton());
 	}
 	
 	public void disabledInit()
@@ -656,7 +712,10 @@ public class Robot extends IterativeRobot
 	{
 		//if "Gyro Calibrate" is checked
 		//calibrate the gyro
-		robotGyro.calibrate();
+		if (calGyro)
+		{
+			robotGyro.calibrate();
+		}
 		//reachedTargetTime = 999; // bug fix for auto ask chris sorry
 	}
 
@@ -730,11 +789,11 @@ public class Robot extends IterativeRobot
 		shooterErrorThreshold = SmartDashboard.getNumber("Shooter Speed Error Threshold", shooterErrorThreshold);
 		
 		//eliminates deadband caused by cheapo xbox controllers
-		if (intakeSpeed > -0.1 && intakeSpeed < 0.1) 
+		if (intakeSpeed > -0.2 && intakeSpeed < 0.2) 
 		{
 			intakeSpeed = 0;
 		}
-		if (feedSpeed > -0.1 && feedSpeed < 0.1)
+		if (feedSpeed > -0.2 && feedSpeed < 0.2)
 		{
 			feedSpeed = 0;
 		}
