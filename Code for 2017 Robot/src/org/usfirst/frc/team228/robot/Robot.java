@@ -46,6 +46,15 @@ public class Robot extends IterativeRobot
 	SendableChooser<String> autoChooser; //new
 	//SendableChooser autoChooser; //old
 	
+	//Speed limit
+	double previousInput;
+	double currentTime;
+	final double rateLimit = 2.0;
+	double currentInput;
+	double previousTime;
+	Timer teleopTimer;
+
+	
 	//Teleop Drive Mode Selection
 	//Strings for each particular mode
 	final String arcadeMode = "Arcade";
@@ -136,6 +145,7 @@ public class Robot extends IterativeRobot
 	Timer autoTimer;
 	int gearAutonCase = 0;
 	double reachedTargetTime = 999;
+
 	
 	//example for toggling buttons
 	//boolean exampleState; //when true, will do the thing on the robot 
@@ -151,6 +161,9 @@ public class Robot extends IterativeRobot
 		
 		//camera
 		CameraServer.getInstance().startAutomaticCapture();
+		
+		previousInput = 0;
+		currentTime = 0;
 		
 		//Shooter
 		//threshold for shooter speed error - the feeder will run when under this error for a set time
@@ -622,7 +635,12 @@ public class Robot extends IterativeRobot
 		//get drive mode selection (tank, arcade, GTA)
 		//driveMode = (String) driveChooser.getSelected();
 		//print drive mode selection
-		//System.out.println("Drive mode selected: " + driveMode);		
+		//System.out.println("Drive mode selected: " + driveMode);
+		teleopTimer.reset();
+		teleopTimer.start();
+		
+		previousTime = 0;
+		previousInput = 0;
 	}
 
 	/**
@@ -1075,6 +1093,7 @@ public class Robot extends IterativeRobot
 		hangingWinch.set(hangingSpeed);
 	}
 	
+	
 	/** Test mode is used in order to verify motors are working properly and spinning in correct direction.
 	* Do not use for anything other than debugging!!
 	*/
@@ -1110,6 +1129,24 @@ public class Robot extends IterativeRobot
 		{
 			shooterMotor3.set(0);
 		}
+	}
+	/**
+	 * This function will limit how fast the robot can travel.  We'll probably have to change this and how it works
+	 * @param currentInput
+	 * @return the limit
+	 */
+	public double rateLimiter(double currentInput) {
+		double speedRate;
+		
+		speedRate = (currentInput - previousInput) / (currentTime - previousTime);
+		
+		if(speedRate > rateLimit) {
+			currentInput = previousInput + rateLimit * (currentTime - previousTime);
+		}
+		else if (speedRate < (-1) * rateLimit) {
+			currentInput = previousInput - rateLimit * (currentTime - previousTime);
+		}
+		return currentInput;
 	}
 	
 	/**
