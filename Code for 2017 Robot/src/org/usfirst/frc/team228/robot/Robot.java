@@ -121,7 +121,7 @@ public class Robot extends IterativeRobot
 	//timer for how long error is below threshold
 	Timer errorTimer;
 	//threshold for shooter speed error - the feeder will run when under this error for a set time
-	double shooterErrorThreshold = 3.0;
+	double shooterErrorThreshold = 20.0;
 	//the amount of time the shooter speed must be within the error threshold to be considered stable
 	double shooterTimeDelay = 0.05;
 	
@@ -329,7 +329,11 @@ public class Robot extends IterativeRobot
 		//exampleState = false;
 		//exampleButtonPrev = false;
 		
+		//Assign the roboRIO's preferences, allowing us to load or save values,
+		//such as strings, booleans, doubles, integers, and floats
+		//These values are stored right on the roboRIO
 		robotPrefs = Preferences.getInstance();
+		
 	}
 	
 	/**
