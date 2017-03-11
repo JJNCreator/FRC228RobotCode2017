@@ -48,9 +48,8 @@ public class Robot extends IterativeRobot
 	
 	//Speed limit
 	double previousInput;
-	double currentTime;
 	final double rateLimit = 2.0;
-	double currentInput;
+	//double currentInput;
 	double previousTime;
 	Timer teleopTimer;
 
@@ -162,9 +161,6 @@ public class Robot extends IterativeRobot
 		//camera
 		CameraServer.getInstance().startAutomaticCapture();
 		
-		previousInput = 0;
-		currentTime = 0;
-		
 		//Shooter
 		//threshold for shooter speed error - the feeder will run when under this error for a set time
 		shooterErrorThreshold = 20.0;
@@ -205,6 +201,9 @@ public class Robot extends IterativeRobot
 
 		//Autonomous mode timer
 		autoTimer = new Timer();
+		
+		//Teleop mode timer
+		teleopTimer = new Timer();
 		
 		//Assign Compressor
 		//compressor = new Compressor();
@@ -671,11 +670,17 @@ public class Robot extends IterativeRobot
 		case GTAMode:
 		default: //we needed a default case to prevent watchdog errors if smartdashboard didn't work
 			combinedTriggerValue = (-1* Math.pow(driverController.getRawAxis(2),2) + Math.pow(driverController.getRawAxis(3),2));
+
+			if(driveShifter.get() == true) {
 			drivetrain.arcadeDrive(combinedTriggerValue, driverController.getRawAxis(0));
 			//if we are in GTA mode, shifting is assigned to a face button instead
 			shifterControl(driverController.getAButton());
 			//display combinedTriggerValue
 			//SmartDashboard.putNumber("GTADriveValue", combinedTriggerValue);
+			}
+			else {
+				drivetrain.arcadeDrive(rateLimiter(combinedTriggerValue), driverController.getRawAxis(0));
+			}
 			break;
 		}
 		
@@ -1137,6 +1142,8 @@ public class Robot extends IterativeRobot
 	 */
 	public double rateLimiter(double currentInput) {
 		double speedRate;
+		double currentTime = teleopTimer.get();
+		double rateLimit = 2.0;
 		
 		speedRate = (currentInput - previousInput) / (currentTime - previousTime);
 		
