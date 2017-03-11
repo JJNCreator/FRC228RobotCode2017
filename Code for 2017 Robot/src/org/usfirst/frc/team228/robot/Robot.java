@@ -650,6 +650,10 @@ public class Robot extends IterativeRobot
 		//DRIVER CONTROLS
 		//Value for the GTA Mode arcade function and SmartDashboard data
 		double combinedTriggerValue;
+		//for the "go" axis of arcade drive and axes of tank drive. this lets us square the values properly
+		double arcadeLeftStick;
+		double tankLeftStick;
+		double tankRightStick;
 		
 		//Assign drive mode selection to driveMode
 		driveMode = (String)driveChooser.getSelected();
@@ -658,29 +662,71 @@ public class Robot extends IterativeRobot
 		switch(driveMode)
 		{
 		case arcadeMode:
-			drivetrain.arcadeDrive(driverController, 1, driverController, 4);
+			//square the value of the left axis. if negative, it must be multiplied by -1 after squaring
+			if (driverController.getRawAxis(1) >= 0)
+			{
+				arcadeLeftStick = Math.pow(driverController.getRawAxis(1), 2);
+			}
+			else
+			{
+				arcadeLeftStick = (-1 * Math.pow(driverController.getRawAxis(1), 2));
+			}
+			
+			//start arcade mode
+			drivetrain.arcadeDrive(arcadeLeftStick, driverController.getRawAxis(4));
+			
 			//since we aren't in GTA mode, the left bumper controls shifting
 			shifterControl(driverController.getRawButton(5));
+			
 			break;
+			
 		case tankMode:
-			drivetrain.tankDrive(driverController, 1, driverController, 5);
+			//square the axis value. if negative, multiply by -1 after squaring
+			if (driverController.getRawAxis(1) >= 0)
+			{
+				tankLeftStick = Math.pow(driverController.getRawAxis(1), 2);
+			}
+			else
+			{
+				tankLeftStick = (-1 * Math.pow(driverController.getRawAxis(1), 2));
+			}
+			//same for right axis
+			if (driverController.getRawAxis(5) >= 0)
+			{
+				tankRightStick = Math.pow(driverController.getRawAxis(5), 2);
+			}
+			else
+			{
+				tankRightStick = (-1 * Math.pow(driverController.getRawAxis(5), 2));
+			}
+			
+			//do tank mode
+			drivetrain.tankDrive(tankLeftStick, tankRightStick);
+			
+			//the old, simple tank mode:
+			//drivetrain.tankDrive(driverController, 1, driverController, 5);
+			
 			//since we aren't in GTA mode, the left bumper controls shifting
 			shifterControl(driverController.getRawButton(5));
 			break;
+			
 		case GTAMode:
 		default: //we needed a default case to prevent watchdog errors if smartdashboard didn't work
-			combinedTriggerValue = (-1* Math.pow(driverController.getRawAxis(2),2) + Math.pow(driverController.getRawAxis(3),2));
+			combinedTriggerValue = (-1 * Math.pow(driverController.getRawAxis(2), 2) + Math.pow(driverController.getRawAxis(3), 2));
 
-			if(driveShifter.get() == true) {
-			drivetrain.arcadeDrive(combinedTriggerValue, driverController.getRawAxis(0));
-			//if we are in GTA mode, shifting is assigned to a face button instead
-			shifterControl(driverController.getAButton());
-			//display combinedTriggerValue
-			//SmartDashboard.putNumber("GTADriveValue", combinedTriggerValue);
+			if(driveShifter.get() == true)
+			{
+				drivetrain.arcadeDrive(combinedTriggerValue, driverController.getRawAxis(0));
+				//if we are in GTA mode, shifting is assigned to a face button instead
+				shifterControl(driverController.getAButton());
+				//display combinedTriggerValue
+				//SmartDashboard.putNumber("GTADriveValue", combinedTriggerValue);
 			}
-			else {
+			else
+			{
 				drivetrain.arcadeDrive(rateLimiter(combinedTriggerValue), driverController.getRawAxis(0));
 			}
+			
 			break;
 		}
 		
