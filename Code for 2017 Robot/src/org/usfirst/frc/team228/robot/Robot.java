@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.IterativeRobot;
+import edu.wpi.first.wpilibj.PowerDistributionPanel;
 import edu.wpi.first.wpilibj.RobotDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -17,6 +18,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.VictorSP; //not victor like we thought
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.Preferences;
+import edu.wpi.first.wpilibj.PowerDistributionPanel;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -52,6 +54,9 @@ public class Robot extends IterativeRobot
 	//double currentInput;
 	double previousTime;
 	Timer teleopTimer;
+	
+	//Power Distribution Panel
+	PowerDistributionPanel pDPanel;
 
 	
 	//Teleop Drive Mode Selection
@@ -160,6 +165,8 @@ public class Robot extends IterativeRobot
 		
 		//camera
 		CameraServer.getInstance().startAutomaticCapture();
+		
+		pDPanel = new PowerDistributionPanel(0);
 		
 		//Shooter
 		//threshold for shooter speed error - the feeder will run when under this error for a set time
@@ -381,6 +388,8 @@ public class Robot extends IterativeRobot
 	 */
 	public void autonomousPeriodic()
 	{
+		DisplayCurrent();
+		
 		switch(autoSelected)
 		{
 		case centerGearAuto:
@@ -657,6 +666,8 @@ public class Robot extends IterativeRobot
 		
 		//Assign drive mode selection to driveMode
 		driveMode = (String)driveChooser.getSelected();
+		
+		DisplayCurrent();
 		
 		//Start drive mode
 		switch(driveMode)
@@ -1200,6 +1211,12 @@ public class Robot extends IterativeRobot
 			currentInput = previousInput - rateLimit * (currentTime - previousTime);
 		}
 		return currentInput;
+	}
+	/**
+	 * Puts the value of the robot's current on SmartDashboard
+	 */
+	public void DisplayCurrent() {
+		SmartDashboard.putNumber("Current", pDPanel.getCurrent(0));
 	}
 	
 	/**
