@@ -9,6 +9,7 @@ import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.IterativeRobot;
+import edu.wpi.first.wpilibj.PowerDistributionPanel;
 import edu.wpi.first.wpilibj.RobotDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -82,6 +83,7 @@ public class Robot extends IterativeRobot
 	//pneumatics (shifters)
 	Solenoid driveShifter;
 	boolean shifterLowGear, shifterButtonPrev;
+	
 		
 	//Drive Function
 	RobotDrive drivetrain;
@@ -136,6 +138,8 @@ public class Robot extends IterativeRobot
 	//variables
 	boolean hangFeedForward; //when true, will apply feed forward value to hanger 
 	boolean hangButtonPrev; //state of the button from last iteration
+	//set a threshold for the hanging motor current, over which the motor should be shut off
+	double hangMotorLimit;
 	
 	//Checks if auto is on
 	boolean inAuto; //removed "= true", because it shouldn't default to true
@@ -232,6 +236,9 @@ public class Robot extends IterativeRobot
 		//Assign Drive Function
 		drivetrain = new RobotDrive(leftDrive1, leftDrive2, rightDrive1, rightDrive2);
 		
+		//Put drive acceleration limit on SDB
+		SmartDashboard.putNumber("Acceleration Limit", rateLimit);
+		
 		//Assign XboxControllers
 		driverController = new XboxController(0);
 		operatorController = new XboxController(1);
@@ -318,6 +325,8 @@ public class Robot extends IterativeRobot
 		hangingWinch.setInverted(true);
 		hangFeedForward = false;
 		hangButtonPrev = false;
+		//set hanging motor current limit
+		hangMotorLimit = 0.0;
 		
 		//set example mechanism and button statuses to false
 		//exampleState = false;
@@ -794,6 +803,29 @@ public class Robot extends IterativeRobot
 	}
 
 	/**
+	 * This function will limit how fast the robot can travel.  We'll probably have to change this and how it works
+	 * @param currentInput
+	 * @return the limit
+	 */
+	public double rateLimiter(double currentInput) {
+		double speedRate;
+		double currentTime = teleopTimer.get();
+		double rateLimit = 2.0;
+		//update rateLimit from SDB
+		rateLimit = SmartDashboard.getNumber("Acceleration Limit", rateLimit);
+		
+		speedRate = (currentInput - previousInput) / (currentTime - previousTime);
+		
+		if(speedRate > rateLimit) {
+			currentInput = previousInput + rateLimit * (currentTime - previousTime);
+		}
+		else if (speedRate < (-1) * rateLimit) {
+			currentInput = previousInput - rateLimit * (currentTime - previousTime);
+		}
+		return currentInput;
+	}
+	
+	/**
 	 * This function toggles the gear pincher open/closed using a button
 	 * @param pincherButton
 	 */
@@ -1118,30 +1150,41 @@ public class Robot extends IterativeRobot
 	{
 		final double hangFFValue = 0.3; //change this to change how much FF to apply
 		
-		//first check to see if the feed forward button has been pressed AND if it changed state
-		//otherwise you would rapidly alternate between ff being on and off as long as the button was pressed!
-		if (ffButton != hangButtonPrev && ffButton) 
-		{ 
-			//toggle the state of hang feed forward
-			hangFeedForward = !hangFeedForward;
-		}
-		//now that check is complete, store value of button for next iteration of loop
-		hangButtonPrev = ffButton;
-		
-		//if feed forward is on, apply it to the input
-		if (hangFeedForward) 
+		//check
+		//if the current for the hanging motor is above the threshold, set motor current to 0
+		if (getCurrent(0) > hangMotorLimit)
 		{
-			hangingSpeed += hangFFValue;
-		}
-		//if resulting value is >1.0, reduce it
-		if (hangingSpeed > 1.0) 
-		{
-			hangingSpeed = 1.0;
+			hangingWinch.set(0.0);
 		}
 		
-		//actually do the hanging motor command here
-		//if you need to invert this, also invert the hangFFValue constant above
-		hangingWinch.set(hangingSpeed);
+		else
+		{
+			
+			//first check to see if the feed forward button has been pressed AND if it changed state
+			//otherwise you would rapidly alternate between ff being on and off as long as the button was pressed!
+			if (ffButton != hangButtonPrev && ffButton) 
+			{ 
+				//toggle the state of hang feed forward
+				hangFeedForward = !hangFeedForward;
+			}
+			//now that check is complete, store value of button for next iteration of loop
+			hangButtonPrev = ffButton;
+			
+			//if feed forward is on, apply it to the input
+			if (hangFeedForward) 
+			{
+				hangingSpeed += hangFFValue;
+			}
+			//if resulting value is >1.0, reduce it
+			if (hangingSpeed > 1.0) 
+			{
+				hangingSpeed = 1.0;
+			}
+			
+			//actually do the hanging motor command here
+			//if you need to invert this, also invert the hangFFValue constant above
+			hangingWinch.set(hangingSpeed);
+		}
 	}
 	
 	
@@ -1181,26 +1224,7 @@ public class Robot extends IterativeRobot
 			shooterMotor3.set(0);
 		}
 	}
-	/**
-	 * This function will limit how fast the robot can travel.  We'll probably have to change this and how it works
-	 * @param currentInput
-	 * @return the limit
-	 */
-	public double rateLimiter(double currentInput) {
-		double speedRate;
-		double currentTime = teleopTimer.get();
-		double rateLimit = 2.0;
-		
-		speedRate = (currentInput - previousInput) / (currentTime - previousTime);
-		
-		if(speedRate > rateLimit) {
-			currentInput = previousInput + rateLimit * (currentTime - previousTime);
-		}
-		else if (speedRate < (-1) * rateLimit) {
-			currentInput = previousInput - rateLimit * (currentTime - previousTime);
-		}
-		return currentInput;
-	}
+
 	
 	/**
 	 * This is an example function for toggling when you press a button
