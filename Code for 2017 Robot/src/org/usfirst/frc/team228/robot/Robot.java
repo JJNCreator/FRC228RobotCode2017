@@ -53,6 +53,8 @@ public class Robot extends IterativeRobot
 	//double currentInput;
 	double previousTime;
 	Timer teleopTimer;
+	
+	PowerDistributionPanel pdPanel; 
 
 	
 	//Teleop Drive Mode Selection
@@ -326,7 +328,7 @@ public class Robot extends IterativeRobot
 		hangFeedForward = false;
 		hangButtonPrev = false;
 		//set hanging motor current limit
-		hangMotorLimit = 0.0;
+		hangMotorLimit = 2.0;
 		
 		//set example mechanism and button statuses to false
 		//exampleState = false;
@@ -1152,14 +1154,14 @@ public class Robot extends IterativeRobot
 		
 		//check
 		//if the current for the hanging motor is above the threshold, set motor current to 0
-		if (getCurrent(0) > hangMotorLimit)
+		if (pdPanel.getCurrent(0) > hangMotorLimit)
 		{
 			hangingWinch.set(0.0);
 		}
 		
 		else
 		{
-			
+			//normal hang motor function
 			//first check to see if the feed forward button has been pressed AND if it changed state
 			//otherwise you would rapidly alternate between ff being on and off as long as the button was pressed!
 			if (ffButton != hangButtonPrev && ffButton) 
@@ -1186,8 +1188,7 @@ public class Robot extends IterativeRobot
 			hangingWinch.set(hangingSpeed);
 		}
 	}
-	
-	
+
 	/** Test mode is used in order to verify motors are working properly and spinning in correct direction.
 	* Do not use for anything other than debugging!!
 	*/
