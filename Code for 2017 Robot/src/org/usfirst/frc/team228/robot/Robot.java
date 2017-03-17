@@ -329,6 +329,8 @@ public class Robot extends IterativeRobot
 		hangButtonPrev = false;
 		//set hanging motor current limit
 		hangMotorLimit = 2.0;
+		//put hang motor limit on SDB
+		SmartDashboard.putNumber("Hang Motor Current Limit", hangMotorLimit);
 		
 		//set example mechanism and button statuses to false
 		//exampleState = false;
@@ -1152,8 +1154,9 @@ public class Robot extends IterativeRobot
 	{
 		final double hangFFValue = 0.3; //change this to change how much FF to apply
 		
-		//check
-		//if the current for the hanging motor is above the threshold, set motor current to 0
+		//get hang motor current limit from SDB
+		hangMotorLimit = SmartDashboard.getNumber("Hanging Motor Current Limit", hangMotorLimit);
+		//check hang motor current; if the current for the hanging motor is above the threshold, set motor current to 0
 		if (pdPanel.getCurrent(0) > hangMotorLimit)
 		{
 			hangingWinch.set(0.0);
