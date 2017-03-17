@@ -328,7 +328,7 @@ public class Robot extends IterativeRobot
 		hangFeedForward = false;
 		hangButtonPrev = false;
 		//set hanging motor current limit
-		hangMotorLimit = 2.0;
+		hangMotorLimit = 50.0; //motor is on a 40 amp breaker
 		//put hang motor limit on SDB
 		SmartDashboard.putNumber("Hang Motor Current Limit", hangMotorLimit);
 		
@@ -340,6 +340,10 @@ public class Robot extends IterativeRobot
 		//such as strings, booleans, doubles, integers, and floats
 		//These values are stored right on the roboRIO
 		robotPrefs = Preferences.getInstance();
+		
+		//power distribution panel initialization
+		//couldn't find jake's code lol
+		pdPanel = new PowerDistributionPanel(4); //double check CAN ID on EACH robot
 		
 	}
 	
@@ -660,6 +664,8 @@ public class Robot extends IterativeRobot
 	 */
 	public void teleopPeriodic()
 	{
+		//this boolean is to disable the acceleration limiter if necessary
+		final boolean accelerationLimiterOn = true;
 		//DRIVER CONTROLS
 		//Value for the GTA Mode arcade function and SmartDashboard data
 		double combinedTriggerValue;
@@ -727,7 +733,7 @@ public class Robot extends IterativeRobot
 		default: //we needed a default case to prevent watchdog errors if smartdashboard didn't work
 			combinedTriggerValue = (-1 * Math.pow(driverController.getRawAxis(2), 2) + Math.pow(driverController.getRawAxis(3), 2));
 
-			if(driveShifter.get() == true)
+			if(driveShifter.get() == true && accelerationLimiterOn)
 			{
 				drivetrain.arcadeDrive(combinedTriggerValue, driverController.getRawAxis(0));
 				//if we are in GTA mode, shifting is assigned to a face button instead
