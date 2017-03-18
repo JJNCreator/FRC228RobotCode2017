@@ -807,7 +807,7 @@ public class Robot extends IterativeRobot
 	}
 
 	/**
-	 * This function will limit how fast the robot can travel.  We'll probably have to change this and how it works
+	 * This function will limit how fast the robot can travel.  Returns a double
 	 * @param currentInput
 	 * @return the limit
 	 */
