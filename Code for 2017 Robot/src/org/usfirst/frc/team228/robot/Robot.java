@@ -1159,7 +1159,7 @@ public class Robot extends IterativeRobot
 		//get hang motor current limit from SDB
 		hangMotorLimit = SmartDashboard.getNumber("Hanging Motor Current Limit", hangMotorLimit);
 		//check hang motor current; if the current for the hanging motor is above the threshold, set motor current to 0
-		if (pdPanel.getCurrent(0) > hangMotorLimit)
+		if (pdPanel.getCurrent(5) > hangMotorLimit)
 		{
 			hangingWinch.set(0.0);
 		}
