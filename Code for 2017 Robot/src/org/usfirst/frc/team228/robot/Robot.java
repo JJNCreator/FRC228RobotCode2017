@@ -313,7 +313,9 @@ public class Robot extends IterativeRobot
 		SmartDashboard.putNumber("Shooter D", ShooterD);
 		SmartDashboard.putNumber("Shooter I Zone", ShooterIZone);
 		
-		shooterMotor3.setProfile(0);//what the fuck is this
+		shooterMotor3.setProfile(0); //Select which closed loop profile to use, 
+		//and uses whatever PIDF gains and the such that are already there.
+		
 		shooterMotor3.setF(ShooterF);
 		shooterMotor3.setP(ShooterP);
 		shooterMotor3.setI(ShooterI);
