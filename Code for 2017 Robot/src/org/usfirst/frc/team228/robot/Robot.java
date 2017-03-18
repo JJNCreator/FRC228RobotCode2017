@@ -56,7 +56,6 @@ public class Robot extends IterativeRobot
 	
 	PowerDistributionPanel pdPanel; 
 
-	
 	//Teleop Drive Mode Selection
 	//Strings for each particular mode
 	final String arcadeMode = "Arcade";
@@ -102,6 +101,9 @@ public class Robot extends IterativeRobot
 	Solenoid gearRotator; 
 	boolean gearRotatorDown; //true = rotator down
 	boolean gearRotatorButtonPrev; //state of the button from last iteration
+	//Roller gear pickup (new mechanism)
+	VictorSP gearRoller;
+	
 	
 	//Ball Manipulation
 	//Feeder and Intake
@@ -1163,7 +1165,7 @@ public class Robot extends IterativeRobot
 		//get hang motor current limit from SDB
 		hangMotorLimit = SmartDashboard.getNumber("Hanging Motor Current Limit", hangMotorLimit);
 		//check hang motor current; if the current for the hanging motor is above the threshold, set motor current to 0
-		if (pdPanel.getCurrent(0) > hangMotorLimit)
+		if (pdPanel.getCurrent(5) > hangMotorLimit)
 		{
 			hangingWinch.set(0.0);
 		}
