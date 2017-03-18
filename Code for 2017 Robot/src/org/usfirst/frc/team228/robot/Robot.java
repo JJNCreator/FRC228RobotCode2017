@@ -216,6 +216,9 @@ public class Robot extends IterativeRobot
 		//Assign Compressor
 		//compressor = new Compressor();
 		
+		//Assign the PDPanel
+		pdPanel = new PowerDistributionPanel(5);
+		
 		//Assign Gyro
 		robotGyro = new ADXRS450_Gyro();
 		SmartDashboard.putBoolean("Gyro Calibrate", true);
@@ -315,7 +318,9 @@ public class Robot extends IterativeRobot
 		SmartDashboard.putNumber("Shooter D", ShooterD);
 		SmartDashboard.putNumber("Shooter I Zone", ShooterIZone);
 		
-		shooterMotor3.setProfile(0);//what the fuck is this
+		shooterMotor3.setProfile(0); //Select which closed loop profile to use, 
+		//and uses whatever PIDF gains and the such that are already there.
+		
 		shooterMotor3.setF(ShooterF);
 		shooterMotor3.setP(ShooterP);
 		shooterMotor3.setI(ShooterI);
@@ -346,7 +351,6 @@ public class Robot extends IterativeRobot
 		//power distribution panel initialization
 		//couldn't find jake's code lol
 		pdPanel = new PowerDistributionPanel(4); //double check CAN ID on EACH robot
-		
 	}
 	
 	/**
@@ -815,7 +819,7 @@ public class Robot extends IterativeRobot
 	}
 
 	/**
-	 * This function will limit how fast the robot can travel.  We'll probably have to change this and how it works
+	 * This function will limit how fast the robot can travel.  Returns a double
 	 * @param currentInput
 	 * @return the limit
 	 */
