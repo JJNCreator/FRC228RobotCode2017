@@ -259,6 +259,7 @@ public class Robot extends IterativeRobot
 		gearRotator = new Solenoid(4);
 		gearRotatorDown = false;
 		gearRotatorButtonPrev = false;
+		gearRoller = new VictorSP(7);
 		
 		//Ball Manipulation
 		//Intake and Feeder
@@ -683,6 +684,9 @@ public class Robot extends IterativeRobot
 		//Assign drive mode selection to driveMode
 		driveMode = (String)driveChooser.getSelected();
 		
+		//temp code for roller
+		gearRoller.set(operatorController.getRawAxis(5));
+		
 		//Start drive mode
 		switch(driveMode)
 		{
@@ -738,18 +742,18 @@ public class Robot extends IterativeRobot
 		case GTAMode:
 		default: //we needed a default case to prevent watchdog errors if smartdashboard didn't work
 			combinedTriggerValue = (-1 * Math.pow(driverController.getRawAxis(2), 2) + Math.pow(driverController.getRawAxis(3), 2));
-
-			if(driveShifter.get() == true && accelerationLimiterOn)
+			shifterControl(driverController.getAButton());
+			if(driveShifter.get() == true || !accelerationLimiterOn)
 			{
 				drivetrain.arcadeDrive(combinedTriggerValue, driverController.getRawAxis(0));
 				//if we are in GTA mode, shifting is assigned to a face button instead
-				shifterControl(driverController.getAButton());
 				//display combinedTriggerValue
 				//SmartDashboard.putNumber("GTADriveValue", combinedTriggerValue);
 			}
 			else
 			{
 				drivetrain.arcadeDrive(rateLimiter(combinedTriggerValue), driverController.getRawAxis(0));
+	
 			}
 			
 			break;
@@ -760,7 +764,7 @@ public class Robot extends IterativeRobot
 		pincherControl(operatorController.getBButton());
 
 		//Gear Rotator: toggle with A (on/down)/(DEFAULT: off/up)
-		gearRotatorControl(operatorController.getAButton());
+		gearControl(operatorController.getAButton(), operatorController.getRawAxis(5));
 		
 		//Ball intake and feed combined function, left trigger and left joystick y axis
 		intakeAndFeedBalls(operatorController.getRawAxis(2), operatorController.getRawAxis(1));
@@ -870,9 +874,10 @@ public class Robot extends IterativeRobot
 
 	/**
 	 * This function toggles the gear rotator up/down using a button
-	 * @param exampleButton
+	 * and runs the gear intake roller
+	 * @param gearRotatorButton
 	 */
-	public void gearRotatorControl(boolean gearRotatorButton)
+	public void gearControl(boolean gearRotatorButton, double intakeSpeed)
 	{
 		//if the button is pressed, and if it changed state
 		if (gearRotatorButton && gearRotatorButton != gearRotatorButtonPrev)
@@ -892,6 +897,17 @@ public class Robot extends IterativeRobot
 		{
 			//OFF: gear rotator up
 			gearRotator.set(false);
+		}
+		
+		//run the intake (joystick up = in)
+		//set to -.25 if less than -.25, to not shoot gear out too fast
+		if (intakeSpeed <-0.25)
+		{
+			gearRoller.set(-0.25);
+		}
+		else
+		{
+			gearRoller.set(intakeSpeed);
 		}
 	}	
 	
