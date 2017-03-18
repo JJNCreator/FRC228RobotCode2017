@@ -214,6 +214,9 @@ public class Robot extends IterativeRobot
 		//Assign Compressor
 		//compressor = new Compressor();
 		
+		//Assign the PDPanel
+		pdPanel = new PowerDistributionPanel(5);
+		
 		//Assign Gyro
 		robotGyro = new ADXRS450_Gyro();
 		SmartDashboard.putBoolean("Gyro Calibrate", true);
@@ -342,6 +345,8 @@ public class Robot extends IterativeRobot
 		//such as strings, booleans, doubles, integers, and floats
 		//These values are stored right on the roboRIO
 		robotPrefs = Preferences.getInstance();
+		
+		
 		
 	}
 	
