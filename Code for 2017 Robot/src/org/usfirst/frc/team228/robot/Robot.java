@@ -53,6 +53,7 @@ public class Robot extends IterativeRobot
 	//double currentInput;
 	double previousTime;
 	Timer teleopTimer;
+	double gearDropTime = -1;
 	
 	PowerDistributionPanel pdPanel; 
 
@@ -763,7 +764,7 @@ public class Robot extends IterativeRobot
 		//Pincher: toggle  with B (DoubleSolenoid.Value.kForward = closed, ...kReverse = open)
 		pincherControl(operatorController.getBButton());
 
-		//Gear Rotator: toggle with A (on/down)/(DEFAULT: off/up)
+		//Gear Control: toggle with A (on/down)/(DEFAULT: off/up); right stick Y axis for intake: up = in
 		gearControl(operatorController.getAButton(), operatorController.getRawAxis(5));
 		
 		//Ball intake and feed combined function, left trigger and left joystick y axis
@@ -884,6 +885,11 @@ public class Robot extends IterativeRobot
 		{ 
 			//toggle the state of gearRotator
 			gearRotatorDown = !gearRotatorDown;
+			//set time of gear drop if gear is being dropped
+			if (gearRotatorDown)
+			{
+				gearDropTime = teleopTimer.get();
+			}
 		}
 		//now that check is complete, store value of gearRotatorButton for next iteration of loop
 		gearRotatorButtonPrev = gearRotatorButton;
@@ -902,6 +908,11 @@ public class Robot extends IterativeRobot
 		//run the intake (joystick up = in)
 		//set to -.25 if less than -.25, to not shoot gear out too fast
 		if (intakeSpeed <-0.25)
+		{
+			gearRoller.set(-0.25);
+		}
+		//if the gear roller is being dropped, reverse roller for 1 second
+		else if (gearDropTime + 1 > teleopTimer.get())
 		{
 			gearRoller.set(-0.25);
 		}
