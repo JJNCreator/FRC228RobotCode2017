@@ -402,7 +402,7 @@ public class Robot extends IterativeRobot
 		final double targetDistance1 = 69; //distance for side autons to drive before turning
 		final double targetAngleRight = -60; //turn angle for right hand auto
 		final double targetAngleLeft = 60; //turn angle for left hand auto, should be inverse of right
-		final double targetDistanceTwo = 72; //was 74
+		final double targetDistanceTwo = 69; //was 74, then 72. SUBTRACTED 3 inches to account for new mechanism
 		double targetDistance2; //variable used to figure out distance of straight line drive to peg
 		double averageDistance; //calculated distance based on encoder readout
 		
@@ -533,7 +533,8 @@ public class Robot extends IterativeRobot
 			if (autoTimer.get() > reachedTargetTime + 0.25)
 			{
 				//pincher.set(DoubleSolenoid.Value.kReverse);
-				gearControl(true,-0.25); //test this, it may not work how i want
+				gearRotator.set(true); //drop gear intake
+				gearRoller.set(-0.25); //reverse gear intake
 			}
 			if (autoTimer.get() > reachedTargetTime + 0.5)
 			{
@@ -542,16 +543,15 @@ public class Robot extends IterativeRobot
 			break;
 		case 12: //drive backwards after dropping gear
 			drivetrain.arcadeDrive(0.7, robotGyro.getAngle() * gyroP);
-			gearControl(false, -0.25); //simulates letting go of button, for next step
 			if (autoTimer.get() > reachedTargetTime + 2)
 			{
-				gearControl(true, 0); //simulates tapping button to retract intake
+				gearRotator.set(false); //bring gear rotator back up
+				gearRoller.set(0); //stop gear roller
 				gearAutonCase++; //advance to stop driving step
 			}
 			break;
 		case 13: //stop moving, if there is time add a 
 		default:
-			gearControl(false, 0); //releases button to allow gear intake to return to robot
 			drivetrain.arcadeDrive(0, 0);
 			break;
 		}
@@ -787,7 +787,7 @@ public class Robot extends IterativeRobot
 		{
 			gearRoller.set(-0.25);	
 		}
-		else if (gearDropTime + 1 > teleopTimer.get())	//if the gear roller is being dropped
+		else if (gearDropTime + 0.5 > teleopTimer.get())	//if the gear roller is being dropped
 		{
 			gearRoller.set(-0.25); //reverse roller for 1 second
 		}
