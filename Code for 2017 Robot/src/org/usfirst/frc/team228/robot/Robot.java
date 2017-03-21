@@ -31,9 +31,15 @@ public class Robot extends IterativeRobot
 	//PRE INIT - Create variables
 	
 	//ATTENTION!
-	final boolean isPracticeRobot = false; //for later
+	final boolean isPracticeRobot = false;
 	
 	Preferences robotPrefs;
+
+	//Autonomous
+	boolean inAuto;	//Checks if auto is on //removed "= true", because it shouldn't default to true
+	Timer autoTimer;	//time elapsed while in autonomous
+	int gearAutonCase = 0;
+	double reachedTargetTime = 999;
 	
 	//Auto Selection
 	final String defaultAuto = "Drive Forward";
@@ -41,81 +47,61 @@ public class Robot extends IterativeRobot
 	final String gyroAuto = "Gyro Test Auto";
 	final String rightGearAuto = "Right Gear Auto";
 	final String leftGearAuto = "Left Gear Auto";
-	//user's autonomous selection
-	String autoSelected;
-	//autonomous selector
-	SendableChooser<String> autoChooser; //new
+	String autoSelected;	//user's autonomous selection
+	SendableChooser<String> autoChooser;	//autonomous selector //new
 	//SendableChooser autoChooser; //old
 	
-	//Speed limit
-	double previousInput;
+	//Teleop Drive Mode Selection
+	final String arcadeMode = "Arcade";
+	final String tankMode = "Tank";
+	final String GTAMode = "GTA";	//Strings for each particular mode
+	String driveMode;	//user's drive mode selection
+	//int driveTrainId;
+	SendableChooser<String> driveChooser;	//drive mode selector //old
+	//SendableChooser driveChooser; //old
+
+	PowerDistributionPanel pdPanel; 
+			
+	//Compressor
+	Compressor compressor;
+	
+	//Gyro
+	ADXRS450_Gyro robotGyro;
+	boolean calGyro; //true = gyro will calibrate
+	
+	//Drivetrain
+	VictorSP leftDrive1, leftDrive2, rightDrive1, rightDrive2;	//drive motor controllers
+	Encoder leftDriveEncoder, rightDriveEncoder;	//encoders
+	Solenoid driveShifter;
+	boolean shifterLowGear, shifterButtonPrev;	//pneumatics (shifters)
+		
+	//Drive Function
+	RobotDrive drivetrain;
+	XboxController driverController, operatorController;	//driver: driving, operator: functions (like intake and shooter)
+	double previousInput;	// for acceleration limit
 	final double rateLimit = 2.0;
 	//double currentInput;
 	double previousTime;
 	Timer teleopTimer;
 	double gearDropTime = -1;
 	
-	PowerDistributionPanel pdPanel; 
-
-	//Teleop Drive Mode Selection
-	//Strings for each particular mode
-	final String arcadeMode = "Arcade";
-	final String tankMode = "Tank";
-	final String GTAMode = "GTA";
-	//user's drive mode selection
-	String driveMode;
-	//int driveTrainId;
-	//drive mode selector
-	SendableChooser<String> driveChooser; //old
-	//SendableChooser driveChooser; //old
-	
-	//Compressor
-	Compressor compressor;
-	
-	//Gyro
-
-	ADXRS450_Gyro robotGyro;
-	boolean calGyro; //true = gyro will calibrate
-	
-	//Drivetrain
-	//drive motor controllers
-	VictorSP leftDrive1, leftDrive2, rightDrive1, rightDrive2;
-	//encoders
-	Encoder leftDriveEncoder, rightDriveEncoder;
-	//pneumatics (shifters)
-	Solenoid driveShifter;
-	boolean shifterLowGear, shifterButtonPrev;
-	
-		
-	//Drive Function
-	RobotDrive drivetrain;
-	
-	//XBoxControllers: driver: driving, operator: functions (like intake and shooter)
-	XboxController driverController, operatorController;
-
 	//Gear Manipulation
-	//Pincher
-	DoubleSolenoid pincher;
+	DoubleSolenoid pincher;	//Pincher
 	boolean pincherClosed; //true = pinching
 	boolean pincherButtonPrev; //state of the button from last iteration
-	//Rotator, moves gear up/down
-	Solenoid gearRotator; 
+	Solenoid gearRotator; 	//Rotator, moves gear up/down
 	boolean gearRotatorDown; //true = rotator down
 	boolean gearRotatorButtonPrev; //state of the button from last iteration
-	//Roller gear pickup (new mechanism)
-	VictorSP gearRoller;
+	VictorSP gearRoller;	//Roller gear pickup (new mechanism)
 	
 	
 	//Ball Manipulation
-	//Feeder and Intake
-	VictorSP intakeBelt, feederBelt; //belt motor controllers
+	VictorSP intakeBelt, feederBelt; //Feeder and Intake belt motor controllers
 	double feederMaxSpeed; //user input constant to control the speed of feederBelt
-	//human load gate
-	Solenoid HLGate;
+	Solenoid HLGate;	//human load gate
 	boolean HLGateOpen; //true = human load gate open
 	boolean HLGateButtonPrev; //state of the button from last iteration
-	//dumper gate
-	Solenoid dumperGate;
+	Solenoid dumperGate;	//dumper gate
 	boolean dumperGateOpen; //true = dumper gate open
 	boolean dumperButtonPrev; //state of the button from last iteration
 
@@ -124,40 +110,20 @@ public class Robot extends IterativeRobot
 	CANTalon shooterMotor1,shooterMotor2,shooterMotor3;
 	boolean shooterOn;
 	boolean shooterButtonPrev;
-	//constant for shooter speed
-	double OLShooterValue = 0.57; //"open loop shooter value" //no longer FINAL
-	//target value for shooter speed, and constants for FPID
-	double ShooterTarget, ShooterF, ShooterP, ShooterI, ShooterD;
+	double OLShooterValue = 0.57; //constant for shooter speed; "open loop shooter value"
+	double ShooterTarget, ShooterF, ShooterP, ShooterI, ShooterD;	//target value for shooter speed, and constants for FPID
 	int ShooterIZone;
-	//timer for how long error is below threshold
-	Timer errorTimer;
-	//threshold for shooter speed error - the feeder will run when under this error for a set time
-	double shooterErrorThreshold = 20.0;
+	Timer errorTimer;	//timer for how long error is below threshold
+	double shooterErrorThreshold = 20.0;	//shooter speed error; feeder runs when under error for set time
 	//double shooterErrorThreshold; //check robotinit for value
-	//the amount of time the shooter speed must be within the error threshold to be considered stable
-	double shooterTimeDelay; //check robotinit for value
+	double shooterTimeDelay;	//the amount of time the shooter speed must be within the error threshold to be considered stable
+								//check robotinit for value
 	
 	//Hanging
-	//motor controllers
-	VictorSP hangingWinch;
-	//variables
+	VictorSP hangingWinch;	//motor controllers
 	boolean hangFeedForward; //when true, will apply feed forward value to hanger 
 	boolean hangButtonPrev; //state of the button from last iteration
-	//set a threshold for the hanging motor current, over which the motor should be shut off
-	double hangMotorLimit;
-	
-	//Checks if auto is on
-	boolean inAuto; //removed "= true", because it shouldn't default to true
-	
-	//Counts time elapsed while in autonomous
-	Timer autoTimer;
-	int gearAutonCase = 0;
-	double reachedTargetTime = 999;
-
-	
-	//example for toggling buttons
-	//boolean exampleState; //when true, will do the thing on the robot 
-	//boolean exampleButtonPrev; //state of the button from last iteration
+	double hangMotorLimit;	//threshold for the hanging motor current, over which the motor should be shut off
 	
 	/**
 	 * This function is run when the robot is first started up and should be
@@ -167,45 +133,42 @@ public class Robot extends IterativeRobot
 	{
 	//Robot Init - Put Things on SmartDashboard and Assign Everything
 		
-		//camera
+		//RoboRIO's preferences, allowing us to load or save values,
+		//such as strings, booleans, doubles, integers, and floats
+		//These values are stored right on the roboRIO
+		robotPrefs = Preferences.getInstance();
+				
+		//Camera
 		CameraServer.getInstance().startAutomaticCapture();
 		
-		//Shooter
-		//threshold for shooter speed error - the feeder will run when under this error for a set time
-		shooterErrorThreshold = 20.0;
-		//the amount of time the shooter speed must be within the error threshold to be considered stable
-		shooterTimeDelay = 0.05;
-		//put shooter constant data
-		SmartDashboard.putNumber("Shooter constant", OLShooterValue);
-		//get user input for constant, assign to OLShooterValue
-		//puts a boolean (which becomes checkbox) on SmartDashboard
-		SmartDashboard.putBoolean("Shooter PID on", true);
-		//put error threshold for shooter speed to check to run feeder
-		SmartDashboard.putNumber("Shooter Speed Error Threshold", shooterErrorThreshold);
-		//put shooter time delay on SDB
-		SmartDashboard.putNumber("Shooter Time Delay", shooterTimeDelay);
+		//Compressor
+		//compressor = new Compressor();
 		
-		
-		//Assign Chooser for Autonomous programs
-		autoChooser = new SendableChooser<String>();
-		//autoChooser = new SendableChooser();
+		//PDPanel
+		pdPanel = new PowerDistributionPanel(5);
 				
-		//Assign Chooser for Teleop Drive Mode
-		driveChooser = new SendableChooser<String>();
-		//driveChooser = new SendableChooser();
+		//Power Distribution Panel
+		pdPanel = new PowerDistributionPanel(4); //double check CAN ID on EACH robot	//couldn't find jake's code lol
 		
-		//Put Autonomous Chooser
-		autoChooser.addDefault("Drive Forward", defaultAuto);
+		//Gyro
+		robotGyro = new ADXRS450_Gyro();
+		SmartDashboard.putBoolean("Gyro Calibrate", true);
+
+		//Autonomous Chooser
+		autoChooser = new SendableChooser<String>();	//Chooser for Autonomous programs
+		//autoChooser = new SendableChooser();autoChooser.addDefault("Drive Forward", defaultAuto);
 		autoChooser.addObject("Center Gear", centerGearAuto);
 		autoChooser.addObject("Right Gear", rightGearAuto);
 		autoChooser.addObject("Left Gear", leftGearAuto);
-		autoChooser.addObject("Gyro Test Auto", gyroAuto);
+		autoChooser.addObject("Gyro Test Auto", gyroAuto); //put options
 		SmartDashboard.putData("Auto Choices", autoChooser);
 
-		//Put Teleop Drive Mode Chooser
+		//Teleop Drive Mode Chooser
+		driveChooser = new SendableChooser<String>();	//Chooser for Teleop Drive Mode
+		//driveChooser = new SendableChooser();
 		driveChooser.addDefault("GTA Drive", GTAMode);
 		driveChooser.addObject("Tank Drive", tankMode); 
-		driveChooser.addObject("Arcade Drive", arcadeMode);
+		driveChooser.addObject("Arcade Drive", arcadeMode); //put options
 		SmartDashboard.putData("Drive Choices", driveChooser);
 
 		//Autonomous mode timer
@@ -214,67 +177,43 @@ public class Robot extends IterativeRobot
 		//Teleop mode timer
 		teleopTimer = new Timer();
 		
-		//Assign Compressor
-		//compressor = new Compressor();
-		
-		//Assign the PDPanel
-		pdPanel = new PowerDistributionPanel(5);
-		
-		//Assign Gyro
-		robotGyro = new ADXRS450_Gyro();
-		SmartDashboard.putBoolean("Gyro Calibrate", true);
 		//Drivetrain
-		//Assign drive motor controllers
 		leftDrive1 = new VictorSP(0);
 		leftDrive2 = new VictorSP(1);
 		rightDrive1 = new VictorSP(2);
-		rightDrive2 = new VictorSP(3);
-		
-		//Assign drivetrain shifters
+		rightDrive2 = new VictorSP(3);	//DRIVE MOTOR CONTROLLERS
 		driveShifter = new Solenoid(0);
 		shifterLowGear = false; //false means high gear
-		shifterButtonPrev = false;
-		
-		//Assign drivetrain encoders
+		shifterButtonPrev = false;						//SHIFTERS
 		leftDriveEncoder = new Encoder(0, 1, false); //the boolean is to indicate if it is backward
 		rightDriveEncoder = new Encoder(2, 3, true); //one should always be backward of the other
-		leftDriveEncoder.setDistancePerPulse(0.0222);//one pulse is 1/45 of an inch
-		rightDriveEncoder.setDistancePerPulse(0.0222);
+		leftDriveEncoder.setDistancePerPulse(0.0222); //one pulse is 1/45 of an inch
+		rightDriveEncoder.setDistancePerPulse(0.0222);	//ENCODERS
 
-		//Assign Drive Function
+		//Drive Function
 		drivetrain = new RobotDrive(leftDrive1, leftDrive2, rightDrive1, rightDrive2);
-		
-		//Put drive acceleration limit on SDB
-		SmartDashboard.putNumber("Acceleration Limit", rateLimit);
-		
-		//Assign XboxControllers
+		SmartDashboard.putNumber("Acceleration Limit", rateLimit);	//Put drive acceleration limit on SDB
 		driverController = new XboxController(0);
-		operatorController = new XboxController(1);
+		operatorController = new XboxController(1);	//XboxControllers
 		
 		//Gear Manipulation
-		//Assign Pincher
-		pincher = new DoubleSolenoid(2,3);
+		pincher = new DoubleSolenoid(2,3);	//Pincher
 		pincherClosed = true; //this makes setting up auto easier
 		pincherButtonPrev = false;
-		//Assign Rotator
-		gearRotator = new Solenoid(4);
+		gearRotator = new Solenoid(4);	//Rotator
 		gearRotatorDown = false;
 		gearRotatorButtonPrev = false;
 		gearRoller = new VictorSP(7);
 		
 		//Ball Manipulation
-		//Intake and Feeder
-		//Assign belt motor controllers
 		intakeBelt = new VictorSP(4); //ball intake
 		feederBelt = new VictorSP(5); //shooter feed belt
 		feederMaxSpeed = 1.0; //arbitrary starting value
 		SmartDashboard.putNumber("Feeder Max Speed", feederMaxSpeed); //put feederMaxSpeed on SDB
-		//Assign Human Load gate
-		HLGate = new Solenoid(5);
+		HLGate = new Solenoid(5);	//Human Load gate
 		HLGateOpen = false;
 		HLGateButtonPrev = false;
-		//Assign Dumper Gate
-		dumperGate = new Solenoid(6);
+		dumperGate = new Solenoid(6);	//Dumper Gate
 		dumperGateOpen = false;
 		dumperButtonPrev = false;
 		
@@ -283,16 +222,13 @@ public class Robot extends IterativeRobot
 		shooterMotor1 = new CANTalon(1); //verify IDs
 		shooterMotor2 = new CANTalon(2); 
 		shooterMotor3 = new CANTalon(3);
-		//timer for how long error is below threshold
-		errorTimer = new Timer();
-		
+		errorTimer = new Timer();	//timer for how long error is below threshold
 		shooterMotor3.setFeedbackDevice(FeedbackDevice.QuadEncoder);
 		//set other Talons to follow - verify correct numbers for everything
 		shooterMotor2.changeControlMode(CANTalon.TalonControlMode.Follower);
 		shooterMotor2.set(shooterMotor3.getDeviceID());
 		shooterMotor1.changeControlMode(CANTalon.TalonControlMode.Follower);
 		shooterMotor1.set(shooterMotor3.getDeviceID());
-		
 		//set nominal and peak voltage, 12V means full (but only here!)
 		shooterMotor3.configNominalOutputVoltage(0.0, -0.0);
 		shooterMotor3.configPeakOutputVoltage(12.0, -12.0);
@@ -300,9 +236,7 @@ public class Robot extends IterativeRobot
 		{
 			shooterMotor3.reverseSensor(true);
 		}
-		
-		//FPID, TargetAND IZONE SETTINGS 
-		
+		//FPID, Target AND IZONE SETTINGS 
 		// These aggressive PID settings are what we tried last.
 		//Shooter Target setting for point-blank shot. Was 195 until recently
 		ShooterTarget = 190;
@@ -311,7 +245,6 @@ public class Robot extends IterativeRobot
 		ShooterI = 0.04; //was 0.03
 		ShooterD = 300; //was 260, 450, 400
 		ShooterIZone = 5;
-		
 		//display target rpm, F, P, I, and D
 		SmartDashboard.putNumber("Shooter Target", ShooterTarget);
 		SmartDashboard.putNumber("Shooter F", ShooterF);
@@ -319,10 +252,8 @@ public class Robot extends IterativeRobot
 		SmartDashboard.putNumber("Shooter I", ShooterI);
 		SmartDashboard.putNumber("Shooter D", ShooterD);
 		SmartDashboard.putNumber("Shooter I Zone", ShooterIZone);
-		
 		shooterMotor3.setProfile(0); //Select which closed loop profile to use, 
 		//and uses whatever PIDF gains and the such that are already there.
-		
 		shooterMotor3.setF(ShooterF);
 		shooterMotor3.setP(ShooterP);
 		shooterMotor3.setI(ShooterI);
@@ -330,29 +261,23 @@ public class Robot extends IterativeRobot
 		shooterMotor3.setIZone(ShooterIZone);
 		shooterButtonPrev = false;
 		shooterOn = false;
+		shooterErrorThreshold = 20.0;	//the feeder will run when under this error for a set time
+		shooterTimeDelay = 0.05;	//amount of time the shooter speed must be within the error threshold
+											//to be considered stable
+		SmartDashboard.putNumber("Shooter constant", OLShooterValue);	//put shooter constant data
+		//get user input for constant, assign to OLShooterValue
+		SmartDashboard.putBoolean("Shooter PID on", true);	//boolean (which becomes checkbox)
+		SmartDashboard.putNumber("Shooter Speed Error Threshold", shooterErrorThreshold); //threshold for to check to run feeder
+		SmartDashboard.putNumber("Shooter Time Delay", shooterTimeDelay);	//put shooter time delay on SDB
 		
-		//Assign Hanging motor controllers
-		hangingWinch = new VictorSP(6);
+		//Hanger
+		hangingWinch = new VictorSP(6);	//Assign Hanging motor controller
 		hangingWinch.setInverted(true);
 		hangFeedForward = false;
 		hangButtonPrev = false;
-		//set hanging motor current limit
-		hangMotorLimit = 50.0; //motor is on a 40 amp breaker
-		//put hang motor limit on SDB
-		SmartDashboard.putNumber("Hang Motor Current Limit", hangMotorLimit);
-		
-		//set example mechanism and button statuses to false
-		//exampleState = false;
-		//exampleButtonPrev = false;
-		
-		//Assign the roboRIO's preferences, allowing us to load or save values,
-		//such as strings, booleans, doubles, integers, and floats
-		//These values are stored right on the roboRIO
-		robotPrefs = Preferences.getInstance();
-		
-		//power distribution panel initialization
-		//couldn't find jake's code lol
-		pdPanel = new PowerDistributionPanel(4); //double check CAN ID on EACH robot
+		hangMotorLimit = 50.0;	//hanging motor current limit; motor is on a 40 amp breaker
+		SmartDashboard.putNumber("Hang Motor Current Limit", hangMotorLimit);	//put hang motor limit on SDB
+	
 	}
 	
 	/**
@@ -375,7 +300,6 @@ public class Robot extends IterativeRobot
 		
 		//checks if gyro calibration check box is on
 		calGyro = SmartDashboard.getBoolean("Gyro Calibrate", true);
-
 	}
 	
 	/**
@@ -383,21 +307,13 @@ public class Robot extends IterativeRobot
 	 */
 	public void autonomousInit()
 	{
-		//get Autonomous selection
 		autoSelected = autoChooser.getSelected();
-		//print autonomous selection
-		System.out.println("Auto selected: " + autoSelected);
-		
-		//zeros gyro. also ensures gyro finishes calibrating before continuing.
-		robotGyro.reset();
-		
-		//reset encoders
+		System.out.println("Auto selected: " + autoSelected);	//get and print Autonomous selection
+		robotGyro.reset();	//zeros gyro. also ensures gyro finishes calibrating before continuing.
 		leftDriveEncoder.reset();
-		rightDriveEncoder.reset();
-		
-		//starting the timer after the gyro ensures auto runs for correct length even if delayed
+		rightDriveEncoder.reset();	//reset encoders
 		autoTimer.reset();
-		autoTimer.start();
+		autoTimer.start();	//starting the timer after the gyro ensures auto runs for correct length even if delayed
 	}
 
 	/**
@@ -428,6 +344,7 @@ public class Robot extends IterativeRobot
 			break;
 		}
 	}
+	
 	/**This just drives forward for a set number of seconds.
 	* Never Tested!!!
 	*/
@@ -478,7 +395,6 @@ public class Robot extends IterativeRobot
 	
 	/**This scores a gear on a peg directly in front of the robot.
 	*/
-	
 	public void gearAuto(String sideOfField)
 	{
 		final double gyroP = -0.195;
@@ -641,14 +557,12 @@ public class Robot extends IterativeRobot
 	 */
 	public void gyroTestAuto()
 	{
-		//turn off drivetrain
-		drivetrain.arcadeDrive(0.0, 0.0);
-		//check gyro
-		System.out.println(robotGyro.getAngle());
+	
+		drivetrain.arcadeDrive(0.0, 0.0);	//turn off drivetrain
+		System.out.println(robotGyro.getAngle());	//check gyro
 		System.out.println(leftDriveEncoder.get());
 		System.out.println(rightDriveEncoder.get());
-		//wait .1s
-		Timer.delay(0.1);
+		Timer.delay(0.1);	//wait .1s
 	}
 	
 	/**
@@ -656,13 +570,10 @@ public class Robot extends IterativeRobot
 	 */
 	public void teleopInit()
 	{
-		//get drive mode selection (tank, arcade, GTA)
-		//driveMode = (String) driveChooser.getSelected();
-		//print drive mode selection
-		//System.out.println("Drive mode selected: " + driveMode);
+		//driveMode = (String) driveChooser.getSelected();	//get drive mode selection (tank, arcade, GTA)
+		//System.out.println("Drive mode selected: " + driveMode);	//print drive mode selection
 		teleopTimer.reset();
 		teleopTimer.start();
-		
 		previousTime = 0;
 		previousInput = 0;
 	}
@@ -672,72 +583,51 @@ public class Robot extends IterativeRobot
 	 */
 	public void teleopPeriodic()
 	{
-		//this boolean is to disable the acceleration limiter if necessary
-		final boolean accelerationLimiterOn = true;
 		//DRIVER CONTROLS
-		//Value for the GTA Mode arcade function and SmartDashboard data
-		double combinedTriggerValue;
-		//for the "go" axis of arcade drive and axes of tank drive. this lets us square the values properly
+		double combinedTriggerValue;	//Value for the GTA Mode arcade function and SmartDashboard data
 		double arcadeLeftStick;
 		double tankLeftStick;
-		double tankRightStick;
+		double tankRightStick;	//for the "go" axis of arcade drive and axes of tank drive. this lets us square the values properly
+		final boolean accelerationLimiterOn = true;	//to disable the acceleration limiter if necessary
+		gearRoller.set(operatorController.getRawAxis(5));	//temp code for roller
 		
-		//Assign drive mode selection to driveMode
-		driveMode = (String)driveChooser.getSelected();
-		
-		//temp code for roller
-		gearRoller.set(operatorController.getRawAxis(5));
-		
-		//Start drive mode
-		switch(driveMode)
+		driveMode = (String)driveChooser.getSelected();		//Assign drive mode selection to driveMode
+		switch(driveMode)	//Start Drive Mode
 		{
 		case arcadeMode:
-			//square the value of the left axis. if negative, it must be multiplied by -1 after squaring
 			if (driverController.getRawAxis(1) >= 0)
 			{
-				arcadeLeftStick = Math.pow(driverController.getRawAxis(1), 2);
+				arcadeLeftStick = Math.pow(driverController.getRawAxis(1), 2);	//square the value of the left axis. 
 			}
 			else
 			{
-				arcadeLeftStick = (-1 * Math.pow(driverController.getRawAxis(1), 2));
+				arcadeLeftStick = (-1 * Math.pow(driverController.getRawAxis(1), 2)); //if negative, it must be multiplied by -1 after squaring
 			}
-			
-			//start arcade mode
-			drivetrain.arcadeDrive(arcadeLeftStick, driverController.getRawAxis(4));
-			
-			//since we aren't in GTA mode, the left bumper controls shifting
-			shifterControl(driverController.getRawButton(5));
-			
+			drivetrain.arcadeDrive(arcadeLeftStick, driverController.getRawAxis(4));	//start arcade mode
+			shifterControl(driverController.getRawButton(5));	//since we aren't in GTA mode, the left bumper controls shifting
 			break;
 			
 		case tankMode:
-			//square the axis value. if negative, multiply by -1 after squaring
 			if (driverController.getRawAxis(1) >= 0)
 			{
-				tankLeftStick = Math.pow(driverController.getRawAxis(1), 2);
+				tankLeftStick = Math.pow(driverController.getRawAxis(1), 2);	//square the axis value
 			}
 			else
 			{
-				tankLeftStick = (-1 * Math.pow(driverController.getRawAxis(1), 2));
+				tankLeftStick = (-1 * Math.pow(driverController.getRawAxis(1), 2)); //if negative, multiply by -1 after squaring
 			}
-			//same for right axis
+
 			if (driverController.getRawAxis(5) >= 0)
 			{
-				tankRightStick = Math.pow(driverController.getRawAxis(5), 2);
+				tankRightStick = Math.pow(driverController.getRawAxis(5), 2);	//same for right axis
 			}
 			else
 			{
 				tankRightStick = (-1 * Math.pow(driverController.getRawAxis(5), 2));
 			}
-			
-			//do tank mode
-			drivetrain.tankDrive(tankLeftStick, tankRightStick);
-			
-			//the old, simple tank mode:
-			//drivetrain.tankDrive(driverController, 1, driverController, 5);
-			
-			//since we aren't in GTA mode, the left bumper controls shifting
-			shifterControl(driverController.getRawButton(5));
+			drivetrain.tankDrive(tankLeftStick, tankRightStick);	//do tank mode
+			//drivetrain.tankDrive(driverController, 1, driverController, 5);	//the old, simple tank mode
+			shifterControl(driverController.getRawButton(5));	//since we aren't in GTA mode, the left bumper controls shifting
 			break;
 			
 		case GTAMode:
@@ -748,15 +638,13 @@ public class Robot extends IterativeRobot
 			{
 				drivetrain.arcadeDrive(combinedTriggerValue, driverController.getRawAxis(0));
 				//if we are in GTA mode, shifting is assigned to a face button instead
-				//display combinedTriggerValue
-				//SmartDashboard.putNumber("GTADriveValue", combinedTriggerValue);
+				//SmartDashboard.putNumber("GTADriveValue", combinedTriggerValue);	//display combinedTriggerValue
 			}
 			else
 			{
 				drivetrain.arcadeDrive(rateLimiter(combinedTriggerValue), driverController.getRawAxis(0));
 	
 			}
-			
 			break;
 		}
 		
@@ -786,13 +674,12 @@ public class Robot extends IterativeRobot
 	
 	public void disabledInit()
 	{
-		//set all of the toggle states for everything to false
-		//this prevents unexpected movement on re-enable
+
 		//pincherClosed = false; //pincherClosed should not change actually
 		gearRotatorDown = false;
 		HLGateOpen = false;
 		dumperGateOpen = false;
-		shooterOn = false;
+		shooterOn = false;		//set all of the toggle states for everything to false; this prevents unexpected movement on re-enable
 		//shifterLowGear = false;
 		//hangFeedForward = false; //also not sure here
 		
@@ -803,10 +690,8 @@ public class Robot extends IterativeRobot
 		shooterMotor1.changeControlMode(CANTalon.TalonControlMode.Follower);
 		shooterMotor1.set(shooterMotor3.getDeviceID());
 		
-		//set auton variables back to default
-		//clean up later
 		reachedTargetTime = 999;
-		gearAutonCase = 0;
+		gearAutonCase = 0;	//set auton variables back to default; clean up later
 	}
 	
 	/**
@@ -814,11 +699,9 @@ public class Robot extends IterativeRobot
 	 */
 	public void disabledPeriodic()
 	{
-		//if "Gyro Calibrate" is checked
-		//calibrate the gyro
-		if (calGyro)
+		if (calGyro)	//if "Gyro Calibrate" is checked
 		{
-			robotGyro.calibrate();
+			robotGyro.calibrate();	//calibrate the gyro
 		}
 		//reachedTargetTime = 999; // bug fix for auto ask chris sorry
 	}
@@ -832,8 +715,8 @@ public class Robot extends IterativeRobot
 		double speedRate;
 		double currentTime = teleopTimer.get();
 		double rateLimit = 2.0;
-		//update rateLimit from SDB
-		rateLimit = SmartDashboard.getNumber("Acceleration Limit", rateLimit);
+
+		rateLimit = SmartDashboard.getNumber("Acceleration Limit", rateLimit);	//update rateLimit from SDB
 		
 		speedRate = (currentInput - previousInput) / (currentTime - previousTime);
 		
@@ -852,24 +735,19 @@ public class Robot extends IterativeRobot
 	 */
 	public void pincherControl(boolean pincherButton)
 	{
-		//if the button is pressed, and if it changed state
-		if (pincherButton && pincherButton != pincherButtonPrev)
+		if (pincherButton && pincherButton != pincherButtonPrev)	//if the button is pressed, and if it changed state
 		{ 
-			//toggle the state of pincher
-			pincherClosed = !pincherClosed;
+			pincherClosed = !pincherClosed;	//toggle the state of pincher
 		}
-		//now that check is complete, store value of pincherButton for next iteration of loop
-		pincherButtonPrev = pincherButton;
+		pincherButtonPrev = pincherButton;	//now that check is complete, store value of pincherButton for next iteration of loop
 
 		if (pincherClosed)
 		{
-			//ON: pinching/closed
-			pincher.set(DoubleSolenoid.Value.kForward);
+			pincher.set(DoubleSolenoid.Value.kForward);	//ON: pinching/closed
 		}
 		else
 		{
-			//OFF: release/open
-			pincher.set(DoubleSolenoid.Value.kReverse);
+			pincher.set(DoubleSolenoid.Value.kReverse);	//OFF: release/open
 		}
 	}
 
@@ -880,45 +758,36 @@ public class Robot extends IterativeRobot
 	 */
 	public void gearControl(boolean gearRotatorButton, double intakeSpeed)
 	{
-		//if the button is pressed, and if it changed state
-		if (gearRotatorButton && gearRotatorButton != gearRotatorButtonPrev)
+		if (gearRotatorButton && gearRotatorButton != gearRotatorButtonPrev)	//if the button is pressed, and if it changed state
 		{ 
-			//toggle the state of gearRotator
-			gearRotatorDown = !gearRotatorDown;
-			//set time of gear drop if gear is being dropped
-			if (gearRotatorDown)
+			gearRotatorDown = !gearRotatorDown;	//toggle the state of gearRotator
+			if (gearRotatorDown) //if gear is being dropped
 			{
-				gearDropTime = teleopTimer.get();
+				gearDropTime = teleopTimer.get();	//set time of gear drop 
 			}
 		}
-		//now that check is complete, store value of gearRotatorButton for next iteration of loop
-		gearRotatorButtonPrev = gearRotatorButton;
+		gearRotatorButtonPrev = gearRotatorButton;	//now that check is complete, store value of gearRotatorButton for next iteration of loop
 
 		if (gearRotatorDown)
 		{
-			//ON: gear rotator down
-			gearRotator.set(true);
+			gearRotator.set(true);	//ON: gear rotator down
 		}
 		else
 		{
-			//OFF: gear rotator up
-			gearRotator.set(false);
+			gearRotator.set(false);	//OFF: gear rotator up
 		}
 		
-		//run the intake (joystick up = in)
-		//set to -.25 if less than -.25, to not shoot gear out too fast
-		if (intakeSpeed <-0.25)
+		if (intakeSpeed <-0.25) //if less than -.25, set to -.25, to not shoot gear out too fast
 		{
-			gearRoller.set(-0.25);
+			gearRoller.set(-0.25);	
 		}
-		//if the gear roller is being dropped, reverse roller for 1 second
-		else if (gearDropTime + 1 > teleopTimer.get())
+		else if (gearDropTime + 1 > teleopTimer.get())	//if the gear roller is being dropped
 		{
-			gearRoller.set(-0.25);
+			gearRoller.set(-0.25); //reverse roller for 1 second
 		}
 		else
 		{
-			gearRoller.set(intakeSpeed);
+			gearRoller.set(intakeSpeed);	//run the intake (joystick up = in)
 		}
 	}	
 	
@@ -931,11 +800,9 @@ public class Robot extends IterativeRobot
 	*/
 	public void intakeAndFeedBalls(double intakeSpeed, double feedSpeed)
 	{
-		//get user input for Feeder Max Speed
-		feederMaxSpeed = SmartDashboard.getNumber("Feeder Max Speed", feederMaxSpeed);	
-		
-		//get error threshold for shooter speed to check to run feeder
+		feederMaxSpeed = SmartDashboard.getNumber("Feeder Max Speed", feederMaxSpeed);	//get user input for Feeder Max Speed
 		shooterErrorThreshold = SmartDashboard.getNumber("Shooter Speed Error Threshold", shooterErrorThreshold);
+														//get error threshold for shooter speed to check to run feeder
 		
 		//eliminates deadband caused by cheapo xbox controllers
 		if (intakeSpeed > -0.2 && intakeSpeed < 0.2) 
@@ -947,34 +814,25 @@ public class Robot extends IterativeRobot
 			feedSpeed = 0;
 		}
 		
-		//run the feeder and intake
-		//if PID is on and shooter is on
-		if (SmartDashboard.getBoolean("Shooter PID on", false) && shooterOn)
+		if (SmartDashboard.getBoolean("Shooter PID on", false) && shooterOn)	//if PID is on and shooter is on
 		{
-			//if shooter is stable at correct speed
+
 			if (mechanismStable(shooterMotor3.getClosedLoopError() < shooterErrorThreshold
-					&& shooterMotor3.getClosedLoopError() > (shooterErrorThreshold*-1)))
+					&& shooterMotor3.getClosedLoopError() > (shooterErrorThreshold*-1)))	//if shooter is stable at correct speed
 			{
-				//run the feeder
-				feederBelt.set((-1*(intakeSpeed + feedSpeed))*feederMaxSpeed);
-				//run the intake
-				intakeBelt.set(intakeSpeed + (-1 * feedSpeed));
+				feederBelt.set((-1*(intakeSpeed + feedSpeed))*feederMaxSpeed);	//run the feeder
+				intakeBelt.set(intakeSpeed + (-1 * feedSpeed));	//run the intake
 			}
 			else
 			{
-				//don't run feeder
-				feederBelt.set(0);
-				//don't run the intake
-				intakeBelt.set(0);
+				feederBelt.set(0);	//don't run feeder
+				intakeBelt.set(0);	//don't run the intake
 			}
 		}
-		//if not PID or shooter not on
-		else
+		else	//if not PID or shooter not on
 		{
-			//run the feeder
-			feederBelt.set((-1*(intakeSpeed + feedSpeed))*feederMaxSpeed);
-			//run the intake
-			intakeBelt.set(intakeSpeed + (-1 * feedSpeed));
+			feederBelt.set((-1*(intakeSpeed + feedSpeed))*feederMaxSpeed);	//run the feeder
+			intakeBelt.set(intakeSpeed + (-1 * feedSpeed));	//run the intake
 		}
 
 	}
@@ -985,24 +843,19 @@ public class Robot extends IterativeRobot
 	 */
 	public void HLGateControl(boolean HLGateButton)
 	{
-		//if the button is pressed, and if it changed state
-		if (HLGateButton && HLGateButton != HLGateButtonPrev)
+		if (HLGateButton && HLGateButton != HLGateButtonPrev)	//if the button is pressed, and if it changed state
 		{ 
-			//toggle the state of HLGate
-			HLGateOpen = !HLGateOpen;
+			HLGateOpen = !HLGateOpen;	//toggle the state of HLGate
 		}
-		//now that check is complete, store value of HLGateButton for next iteration of loop
-		HLGateButtonPrev = HLGateButton;
+		HLGateButtonPrev = HLGateButton;	//now that check is complete, store value of HLGateButton for next iteration of loop
 
 		if (HLGateOpen)
 		{
-			//ON: open/no shoot state
-			HLGate.set(true);
+			HLGate.set(true);	//ON: open/no shoot state
 		}
 		else
 		{
-			//OFF: closed/shoot state
-			HLGate.set(false);
+			HLGate.set(false);	//OFF: closed/shoot state
 		}
 	}
 
@@ -1012,24 +865,19 @@ public class Robot extends IterativeRobot
 	 */
 	public void dumperGateControl(boolean dumperButton)
 	{
-		//if the button is pressed, and if it changed state
-		if (dumperButton && dumperButton != dumperButtonPrev)
+		if (dumperButton && dumperButton != dumperButtonPrev)	//if the button is pressed, and if it changed state
 		{ 
-			//toggle the state of dumperGate
-			dumperGateOpen = !dumperGateOpen;
+			dumperGateOpen = !dumperGateOpen;	//toggle the state of dumperGate
 		}
-		//now that check is complete, store value of dumperButton for next iteration of loop
-		dumperButtonPrev = dumperButton;
+		dumperButtonPrev = dumperButton;	//now that check is complete, store value of dumperButton for next iteration of loop
 
 		if (dumperGateOpen)
 		{
-			//dumperGate open/no shoot state
-			dumperGate.set(true);
+			dumperGate.set(true);	//dumperGate open/no shoot state
 		}
 		else
 		{
-			//dumperGate closed/shoot state
-			dumperGate.set(false);
+			dumperGate.set(false);	//dumperGate closed/shoot state
 		}
 	}
 	
@@ -1041,24 +889,19 @@ public class Robot extends IterativeRobot
 	
 	public void shifterControl(boolean shifterButton)
 	{
-		//if button is pressed and the state changed (button isn't being held)
-		if (shifterButton && shifterButton != shifterButtonPrev) 
+		if (shifterButton && shifterButton != shifterButtonPrev)	//if button is pressed and the state changed (button isn't being held)
 		{
-			//toggle the shifter state (false means high gear!)
-			shifterLowGear = !shifterLowGear;
+			shifterLowGear = !shifterLowGear;	//toggle the shifter state (false means high gear!)
 		}
-		//now that the check is complete, store button value for next loop
-		shifterButtonPrev = shifterButton;
+		shifterButtonPrev = shifterButton;	//now that the check is complete, store button value for next loop
 		
 		if (shifterLowGear)
 		{
-			//set to low gear
-			driveShifter.set(true);
+			driveShifter.set(true);	//set to low gear
 		} 
 		else 
 		{
-			//set to high gear
-			driveShifter.set(false);
+			driveShifter.set(false);	//set to high gear
 		}
 	}
 	
@@ -1068,21 +911,18 @@ public class Robot extends IterativeRobot
 	 */
 	public void shooterControl(boolean shooterButton, boolean isPID)
 	{
-		
 		//Graph Signal and Error on SmartDashboard. Display Speed as number
 		SmartDashboard.putNumber("Shooter Signal", shooterMotor3.getOutputVoltage() / shooterMotor3.getBusVoltage());
 		SmartDashboard.putNumber("Shooter Error", shooterMotor3.getClosedLoopError());
 		SmartDashboard.putNumber("Shooter Speed", shooterMotor3.getSpeed());
 		//move back if needed to inside PID code
 		
-		//get user input for constant, assign to OLShooterValue
 		OLShooterValue = SmartDashboard.getNumber("Shooter constant", OLShooterValue);
+										//get user input for constant, assign to OLShooterValue
 		
-		//if a new button press has started, turn shooter on/off
-		//toggle shooter
-		if(shooterButton && shooterButton != shooterButtonPrev)
+		if(shooterButton && shooterButton != shooterButtonPrev) //if a new button press has started
 		{
-			shooterOn = !shooterOn;
+			shooterOn = !shooterOn; //toggle shooter on/off 
 		}
 		
 		shooterButtonPrev = shooterButton;
@@ -1116,17 +956,15 @@ public class Robot extends IterativeRobot
 			}
 			else //if PID is unchecked
 			{
-				//change talon to open-loop mode, set a value
-				shooterMotor3.changeControlMode(TalonControlMode.PercentVbus);
-				shooterMotor3.set(OLShooterValue); //this value is from SmartDashboard
+				shooterMotor3.changeControlMode(TalonControlMode.PercentVbus);	//change talon to open-loop mode
+				shooterMotor3.set(OLShooterValue); //set a value; this value is from SmartDashboard
 			}
 		}
 		else
 		{
-			//change talon to open-loop mode, set to off
 			//SmartDashboard.putBoolean("Shooter On", false); //like above, this is now in robotPeriodic
-			shooterMotor3.changeControlMode(TalonControlMode.PercentVbus);
-			shooterMotor3.set(0.0);
+			shooterMotor3.changeControlMode(TalonControlMode.PercentVbus);	//change talon to open-loop mode
+			shooterMotor3.set(0.0); //set to off
 		}
 	}
 	
@@ -1143,41 +981,29 @@ public class Robot extends IterativeRobot
 	 */
 	public boolean mechanismStable(boolean isLowError)
 	{
-		//get time delay from SDB
-		SmartDashboard.getNumber("Shooter Time Delay", shooterTimeDelay);
+		SmartDashboard.getNumber("Shooter Time Delay", shooterTimeDelay);	//get time delay from SDB
 		
-		//if the error is below threshold
-		if (isLowError)
+		if (isLowError)	//if the error is below threshold
 		{
-			//if the timer has not started (it will be 0)
-			if (errorTimer.get() == 0.0)
+			if (errorTimer.get() == 0.0)	//if the timer has not started (it will be 0)
 			{
 				errorTimer.start();
 			}
-			//if timer is under user input shooterTimeDelay
-			if (errorTimer.get() > shooterTimeDelay)
+			if (errorTimer.get() > shooterTimeDelay)	//if timer is under user input shooterTimeDelay
 			{
-				//run feeder
-				return true;
+				return true;	//run feeder
 			}
-			//if the error is above threshold and timer is not < 0.25s
-			else
+			else	//if the error is above threshold and timer is not < 0.25s
 			{
-				//don't run feeder
-				return false;
+				return false;	//don't run feeder
 			}
 		}
-		//if the error is not below threshold
-		else
+		else	//if the error is not below threshold
 		{
-			//stop the timer
-			errorTimer.stop();
-			//reset the timer
-			errorTimer.reset();
-			//run the feeder
-			return false;
+			errorTimer.stop();	//stop the timer
+			errorTimer.reset();	//reset the timer
+			return false;	//run the feeder
 		}
-		
 	}
 	
 	/** 
@@ -1192,55 +1018,44 @@ public class Robot extends IterativeRobot
 	public void hangingControl(double hangingSpeed, boolean ffButton)
 	{
 		final double hangFFValue = 0.3; //change this to change how much FF to apply
-		
-		//get hang motor current limit from SDB
-		hangMotorLimit = SmartDashboard.getNumber("Hanging Motor Current Limit", hangMotorLimit);
-		//check hang motor current; if the current for the hanging motor is above the threshold, set motor current to 0
-		if (pdPanel.getCurrent(5) > hangMotorLimit)
+		hangMotorLimit = SmartDashboard.getNumber("Hanging Motor Current Limit", hangMotorLimit);	//get hang motor current limit from SDB
+	
+		if (pdPanel.getCurrent(5) > hangMotorLimit)	//if the current for the hanging motor is above the threshold
 		{
-			hangingWinch.set(0.0);
+			hangingWinch.set(0.0); //set motor current to 0
 		}
 		
 		else
 		{
 			//normal hang motor function
-			//first check to see if the feed forward button has been pressed AND if it changed state
-			//otherwise you would rapidly alternate between ff being on and off as long as the button was pressed!
-			if (ffButton != hangButtonPrev && ffButton) 
-			{ 
-				//toggle the state of hang feed forward
-				hangFeedForward = !hangFeedForward;
+			if (ffButton != hangButtonPrev && ffButton) 	//check to see if the feed forward button has been pressed AND if it changed state
+								//otherwise you would rapidly alternate between ff being on and off as long as the button was pressed!
+				{ 
+				hangFeedForward = !hangFeedForward;	//toggle the state of hang feed forward
 			}
-			//now that check is complete, store value of button for next iteration of loop
-			hangButtonPrev = ffButton;
+			hangButtonPrev = ffButton;	//now that check is complete, store value of button for next iteration of loop
 			
-			//if feed forward is on, apply it to the input
-			if (hangFeedForward) 
+			if (hangFeedForward)	//if feed forward is on
 			{
-				hangingSpeed += hangFFValue;
+				hangingSpeed += hangFFValue; //apply it to the input
 			}
-			//if resulting value is >1.0, reduce it
-			if (hangingSpeed > 1.0) 
+			if (hangingSpeed > 1.0) 	//if resulting value is >1.0
 			{
-				hangingSpeed = 1.0;
+				hangingSpeed = 1.0; //reduce it
 			}
 			
-			//actually do the hanging motor command here
-			//if you need to invert this, also invert the hangFFValue constant above
-			hangingWinch.set(hangingSpeed);
+			hangingWinch.set(hangingSpeed);	//actually do the hanging motor command here
+											//if you need to invert this, also invert the hangFFValue constant above
 		}
 	}
 
 	/** Test mode is used in order to verify motors are working properly and spinning in correct direction.
 	* Do not use for anything other than debugging!!
 	*/
-	
 	//Currently Test mode is only used to make sure all 3 shooter motors are independently working
-	
 	public void testInit() {
-		//change motors 1 and 2 back to percent voltage mode
 		shooterMotor1.changeControlMode(TalonControlMode.PercentVbus);
-		shooterMotor2.changeControlMode(TalonControlMode.PercentVbus);
+		shooterMotor2.changeControlMode(TalonControlMode.PercentVbus);	//change motors 1 and 2 back to percent voltage mode
 	}
 	
 	public void testPeriodic() {
@@ -1267,42 +1082,4 @@ public class Robot extends IterativeRobot
 			shooterMotor3.set(0);
 		}
 	}
-
-	
-	/**
-	 * This is an example function for toggling when you press a button
-	 * 
-	 * It takes the the value of whatever button you want to use
-	 * and it does the thing with the mechanism.
-	 * 
-	 * create global variables boolean exampleState, exampleButtonPrev in pre-init
-	 * set exampleState, exampleButtonPrev to beginning state in robot init, typically false
-	 * 
-	 * to call this method:
-	 * exampleMechanismControl(operatorController.getZButton());
-	 */
-	/*
-	public void exampleMechanismControl(boolean exampleButton)
-	{
-		//if the button is pressed, and if it changed state
-		if (exampleButton && exampleButton != exampleButtonPrev)
-		{ 
-			//toggle the state of mechanism
-			exampleState = !exampleState;
-		}
-		//now that check is complete, store value of exampleButton for next iteration of loop
-		exampleButtonPrev = exampleButton;
-
-		if (exampleState)
-		{
-			//mechanism ON state
-			exampleMechanism.set(true);
-		}
-		else
-		{
-			//mechanism OFF state
-			exampleMechanism.set(false);
-		}
-	}
-	*/
 }
