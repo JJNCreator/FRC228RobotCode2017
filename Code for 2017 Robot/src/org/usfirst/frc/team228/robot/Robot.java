@@ -47,6 +47,8 @@ public class Robot extends IterativeRobot
 	final String gyroAuto = "Gyro Test Auto";
 	final String rightGearAuto = "Right Gear Auto";
 	final String leftGearAuto = "Left Gear Auto";
+	final String rightGearShootAuto = "Right Gear Shoot Auto";
+	final String leftGearShootAuto = "Left Gear Shoot Auto";
 	String autoSelected;	//user's autonomous selection
 	SendableChooser<String> autoChooser;	//autonomous selector //new
 	//SendableChooser autoChooser; //old
@@ -158,6 +160,8 @@ public class Robot extends IterativeRobot
 		//Autonomous Chooser
 		autoChooser = new SendableChooser<String>();	//Chooser for Autonomous programs
 		//autoChooser = new SendableChooser();autoChooser.addDefault("Drive Forward", defaultAuto);
+		autoChooser.addObject("Left Gear Shoot", leftGearShootAuto);
+		autoChooser.addObject("Right Gear Shoot", rightGearShootAuto);
 		autoChooser.addObject("Center Gear", centerGearAuto);
 		autoChooser.addObject("Right Gear", rightGearAuto);
 		autoChooser.addObject("Left Gear", leftGearAuto);
@@ -326,13 +330,19 @@ public class Robot extends IterativeRobot
 		switch(autoSelected)
 		{
 		case centerGearAuto:
-			gearAuto("Center");   
+			gearAuto("Center", false);   
 			break;
 		case rightGearAuto:
-			gearAuto("Right");
+			gearAuto("Right", false);
 			break;
 		case leftGearAuto:
-			gearAuto("Left");
+			gearAuto("Left", false);
+			break;
+		case rightGearShootAuto:
+			gearAuto("Right", true);
+			break;
+		case leftGearShootAuto:
+			gearAuto("Left", true);
 			break;
 		case gyroAuto:
 			gyroTestAuto();
@@ -396,7 +406,7 @@ public class Robot extends IterativeRobot
 	
 	/**This scores a gear on a peg directly in front of the robot.
 	*/
-	public void gearAuto(String sideOfField)
+	public void gearAuto(String sideOfField, boolean shootBalls)
 	{
 		final double gyroP = -0.195; //proportional gain constant for gyro, will need tuning
 		final double targetDistance1 = 69; //distance for side autons to drive before turning
@@ -404,6 +414,10 @@ public class Robot extends IterativeRobot
 		final double targetAngleLeft = 60; //turn angle for left hand auto, should be inverse of right
 		final double targetDistanceTwo = 69; //was 74, then 72. SUBTRACTED 3 inches to account for new mechanism
 		double targetDistance2; //variable used to figure out distance of straight line drive to peg
+		final double targetDistanceShoot1 = -12; //how much to drive away BACKWARDS before spinning for shoot routine
+		final double targetAngleShootRight = -180; //how much to turn after backing away from peg
+		final double targetAngleShootLeft = 180;
+		final double targetDistanceShoot2 = 48; //how much further to drive before shooting
 		double averageDistance; //calculated distance based on encoder readout
 		
 		//the side autos drive forward for a slightly shorter distance
@@ -526,6 +540,8 @@ public class Robot extends IterativeRobot
 			{
 				drivetrain.arcadeDrive(0, 0);
 				reachedTargetTime = autoTimer.get();
+				leftDriveEncoder.reset();
+				rightDriveEncoder.reset();
 				gearAutonCase++; //move on to the next round!
 			}
 			break;
@@ -538,21 +554,119 @@ public class Robot extends IterativeRobot
 			}
 			if (autoTimer.get() > reachedTargetTime + 0.5)
 			{
+				if (shootBalls)
+				{
+				gearAutonCase = 20; //advance to ball shooting steps
+				}
+				else
+				{
 				gearAutonCase++; //advance to drive backwards step
+				}
 			}
 			break;
-		case 12: //drive backwards after dropping gear
+		case 12: //drive backwards after dropping gear, no shooting
 			drivetrain.arcadeDrive(0.7, robotGyro.getAngle() * gyroP);
 			if (autoTimer.get() > reachedTargetTime + 2)
 			{
 				gearRotator.set(false); //bring gear rotator back up
 				gearRoller.set(0); //stop gear roller
-				gearAutonCase++; //advance to stop driving step
+				gearAutonCase = 50; //advance to stop driving step
 			}
 			break;
-		case 13: //stop moving, if there is time add a 
+		case 20: //back up 1 foot before turning to shoot balls, case 12 was skipped
+			//encoders should have been reset
+			if (averageDistance > targetDistanceShoot1) //logic is backward due to moving backward
+			{
+				drivetrain.arcadeDrive(0.7, robotGyro.getAngle() * gyroP);
+			}
+			else if (averageDistance < targetDistanceShoot1 - 4)
+			{
+				drivetrain.arcadeDrive(-0.7, robotGyro.getAngle() * gyroP);
+			}
+			else
+			{
+				gearRotator.set(false); //raise gear rotator
+				gearRoller.set(0); //stop gear roller
+				gearAutonCase++;
+			}
+			break;
+		case 21: //spin to face goal
+			if (sideOfField == "Right") //if sideOfField == "Right"
+			{
+				System.out.println(robotGyro.getAngle());
+				if (robotGyro.getAngle() > targetAngleShootRight)
+				{
+					drivetrain.arcadeDrive(0, -0.75);
+				}
+				else if (robotGyro.getAngle() < targetAngleShootRight - 1) //1 is the overshoot allowance
+				{
+					drivetrain.arcadeDrive(0, +0.75); //consider tuning this down a little
+				}
+				else
+				{
+					System.out.println("Got to this part");
+					robotGyro.reset();
+					leftDriveEncoder.reset();
+					rightDriveEncoder.reset();
+					drivetrain.arcadeDrive(0, 0);
+					gearAutonCase++; //advance to rest of shooting code
+				}
+			}
+			if (sideOfField == "Left")
+			{
+				System.out.println(robotGyro.getAngle());
+				if (robotGyro.getAngle() < targetAngleShootLeft)
+				{
+					drivetrain.arcadeDrive(0, 0.75);
+				}
+				else if (robotGyro.getAngle() > targetAngleShootLeft + 1) //1 is the overshoot allowance
+				{
+					drivetrain.arcadeDrive(0, -0.75); //consider tuning this down a little
+				}
+				else
+				{
+					System.out.println("Got to this part");
+					robotGyro.reset(); //ensures we are starting at zero for straight line auto
+					leftDriveEncoder.reset();
+					rightDriveEncoder.reset();
+					drivetrain.arcadeDrive(0, 0);
+					gearAutonCase++; //advance to rest of shooting code
+				}
+			}
+			break;
+		case 22: //drive gear side forward into goal wall
+			if (averageDistance < targetDistanceShoot2)
+			{
+				drivetrain.arcadeDrive(-0.7, robotGyro.getAngle() * gyroP);
+			}
+			else if (averageDistance > targetDistanceShoot2 + 4)
+			{
+				drivetrain.arcadeDrive(0.7, robotGyro.getAngle() * gyroP);
+			}
+			else
+			{
+				drivetrain.arcadeDrive(0, 0);
+				gearAutonCase++;
+			}
+			break;
+		case 23: //shoot em up
+			if (autoTimer.get() < reachedTargetTime + 7) //if it hasn't been 7 seconds since gear was scored, this is arbitrary
+			{
+				shooterControl(true, true); // turn shooter on (hopefully) with PID settings
+				intakeAndFeedBalls(0, 1); //feed shooter once error threshold met
+			}
+			else
+			{
+				shooterControl(false, true);
+				shooterControl(true, true); //toggles shooter off
+				intakeAndFeedBalls(0, 0); //stop trying to feed balls
+				gearAutonCase = 50;
+			}
+		case 50: //stop moving
 		default:
 			drivetrain.arcadeDrive(0, 0);
+			intakeAndFeedBalls(0, 0); //stop intake if running
+			//add stop shooter control?
 			break;
 		}
 	}
