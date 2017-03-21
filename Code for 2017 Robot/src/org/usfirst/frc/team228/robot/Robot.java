@@ -783,13 +783,17 @@ public class Robot extends IterativeRobot
 			gearRotator.set(false);	//OFF: gear rotator up
 		}
 		
-		if (intakeSpeed <-0.25) //if less than -.25, set to -.25, to not shoot gear out too fast
+		if (intakeSpeed < -0.1) //if control is negative, scale output to prevent fast eject
 		{
-			gearRoller.set(-0.25);	
+			gearRoller.set(intakeSpeed * 0.3); //runs at 30% of requested negative speed	
 		}
 		else if (gearDropTime + 0.5 > teleopTimer.get())	//if the gear roller is being dropped
 		{
-			gearRoller.set(-0.25); //reverse roller for 1 second
+			gearRoller.set(-0.25); //reverse roller for 1/2 second
+		}
+		else if (intakeSpeed < 0.1 && intakeSpeed > -0.1) //if controller joystick is within "deadband" - protects against bad controller
+		{
+			gearRoller.set(0);
 		}
 		else
 		{
