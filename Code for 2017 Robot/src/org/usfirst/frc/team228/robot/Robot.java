@@ -398,13 +398,13 @@ public class Robot extends IterativeRobot
 	*/
 	public void gearAuto(String sideOfField)
 	{
-		final double gyroP = -0.195;
-		final double targetDistance1 = 69;
-		final double targetAngleRight = -60;
-		final double targetAngleLeft = 60;
+		final double gyroP = -0.195; //proportional gain constant for gyro, will need tuning
+		final double targetDistance1 = 69; //distance for side autons to drive before turning
+		final double targetAngleRight = -60; //turn angle for right hand auto
+		final double targetAngleLeft = 60; //turn angle for left hand auto, should be inverse of right
 		final double targetDistanceTwo = 72; //was 74
-		double targetDistance2;
-		double averageDistance;
+		double targetDistance2; //variable used to figure out distance of straight line drive to peg
+		double averageDistance; //calculated distance based on encoder readout
 		
 		//the side autos drive forward for a slightly shorter distance
 		//the adjustment is made here so it can be tweaked easily
@@ -417,19 +417,18 @@ public class Robot extends IterativeRobot
 			targetDistance2 = targetDistanceTwo;
 		}
 		
-		driveShifter.set(true); // low gear
+		driveShifter.set(true); // run autonomous mode in low gear
 		
-		//if below code is uncommented, please comment this out
+		//uncomment this line if error handling code does not work
 		averageDistance = (leftDriveEncoder.getDistance() + rightDriveEncoder.getDistance()) / 2;
 		
 		//error handling for encoder - if one encoder is totally dead, autonomous won't totally fail
-		//TEST ME BEFORE UNCOMMENTING
-		/*
+		//TEST ME BEFORE COMPETITION
 		if (leftDriveEncoder.getDistance() == 0 && rightDriveEncoder.getDistance() > 6)
 		{
 			averageDistance = rightDriveEncoder.getDistance();
 		}
-		else if (rightDriveEncoder.getDistance() == 0 && leftDriveEncoder.getDistance > 6)
+		else if (rightDriveEncoder.getDistance() == 0 && leftDriveEncoder.getDistance() > 6)
 		{
 			averageDistance = leftDriveEncoder.getDistance();
 		}
@@ -437,14 +436,13 @@ public class Robot extends IterativeRobot
 		{
 			averageDistance = (leftDriveEncoder.getDistance() + rightDriveEncoder.getDistance()) / 2;
 		}
-		*/
 		
 		switch(gearAutonCase)
 		{
 		case 0: //check which direction you're going
 			if (sideOfField == "Left" || sideOfField == "Right")
 			{
-				gearAutonCase++; //case 1 is either side case
+				gearAutonCase++; //case 1 is first step of side case
 			}
 			else
 			{
@@ -454,7 +452,7 @@ public class Robot extends IterativeRobot
 			}
 			break;
 		case 1: //for left-right auto, go straight out to rotation point
-				//this is an area that can be sped up but play with setpoints if you do
+				//this is an area that can be sped up, but play with setpoints if you do
 			if (averageDistance < targetDistance1)
 			{
 				drivetrain.arcadeDrive(-0.7, robotGyro.getAngle() * gyroP);
@@ -478,7 +476,7 @@ public class Robot extends IterativeRobot
 				{
 					drivetrain.arcadeDrive(0, -0.75);
 				}
-				else if (robotGyro.getAngle() < targetAngleRight - 1)
+				else if (robotGyro.getAngle() < targetAngleRight - 1) //1 is the overshoot allowance
 				{
 					drivetrain.arcadeDrive(0, +0.75); //consider tuning this down a little
 				}
@@ -489,7 +487,7 @@ public class Robot extends IterativeRobot
 					leftDriveEncoder.reset();
 					rightDriveEncoder.reset();
 					drivetrain.arcadeDrive(0, 0);
-					gearAutonCase = 10; 
+					gearAutonCase = 10; //advance to "center gear" code
 				}
 			}
 			if (sideOfField == "Left")
@@ -499,7 +497,7 @@ public class Robot extends IterativeRobot
 				{
 					drivetrain.arcadeDrive(0, 0.75);
 				}
-				else if (robotGyro.getAngle() > targetAngleLeft + 1)
+				else if (robotGyro.getAngle() > targetAngleLeft + 1) //1 is the overshoot allowance
 				{
 					drivetrain.arcadeDrive(0, -0.75); //consider tuning this down a little
 				}
@@ -510,7 +508,7 @@ public class Robot extends IterativeRobot
 					leftDriveEncoder.reset();
 					rightDriveEncoder.reset();
 					drivetrain.arcadeDrive(0, 0);
-					gearAutonCase = 10; 
+					gearAutonCase = 10; //advance to "center gear" auto code
 				}
 			}
 			break;
@@ -519,9 +517,10 @@ public class Robot extends IterativeRobot
 			{
 				drivetrain.arcadeDrive(-0.7, robotGyro.getAngle() * gyroP);
 			}
-			else if (averageDistance > targetDistance2 + 4)
+			else if (averageDistance > targetDistance2 + 4) //4 is the overshoot allowance
 			{
 				drivetrain.arcadeDrive(0.7, robotGyro.getAngle() * gyroP);
+				//currently this else case is rarely triggered, because the code will advance in the instants before overshooting occurs
 			}
 			else
 			{
@@ -530,23 +529,29 @@ public class Robot extends IterativeRobot
 				gearAutonCase++; //move on to the next round!
 			}
 			break;
-		case 11: //after waiting 0.5 second, drop the thing, after 1, drive back, after 2.5, advance
+		case 11: //after waiting 0.25 second, drop the thing, after 0.5 advance
+			if (autoTimer.get() > reachedTargetTime + 0.25)
+			{
+				//pincher.set(DoubleSolenoid.Value.kReverse);
+				gearControl(true,-0.25); //test this, it may not work how i want
+			}
 			if (autoTimer.get() > reachedTargetTime + 0.5)
 			{
-				pincher.set(DoubleSolenoid.Value.kReverse);
-			}
-			if (autoTimer.get() > reachedTargetTime + 1)
-			{
-				drivetrain.arcadeDrive(0.7, robotGyro.getAngle() * gyroP);
-			}
-			if (autoTimer.get() > reachedTargetTime + 2.5)
-			{
-				drivetrain.arcadeDrive(0, 0);
-				gearAutonCase++;
+				gearAutonCase++; //advance to drive backwards step
 			}
 			break;
-		case 12: //if you get time, add a spin move to reach center field
+		case 12: //drive backwards after dropping gear
+			drivetrain.arcadeDrive(0.7, robotGyro.getAngle() * gyroP);
+			gearControl(false, -0.25); //simulates letting go of button, for next step
+			if (autoTimer.get() > reachedTargetTime + 2)
+			{
+				gearControl(true, 0); //simulates tapping button to retract intake
+				gearAutonCase++; //advance to stop driving step
+			}
+			break;
+		case 13: //stop moving, if there is time add a 
 		default:
+			gearControl(false, 0); //releases button to allow gear intake to return to robot
 			drivetrain.arcadeDrive(0, 0);
 			break;
 		}
