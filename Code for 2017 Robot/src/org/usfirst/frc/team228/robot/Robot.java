@@ -84,6 +84,7 @@ public class Robot extends IterativeRobot
 	double previousTime;
 	Timer teleopTimer;
 	double gearDropTime = -1;
+	double hangStopTime = -1;
 	
 	//Gear Manipulation
 	DoubleSolenoid pincher;	//Pincher
@@ -1021,6 +1022,11 @@ public class Robot extends IterativeRobot
 		hangMotorLimit = SmartDashboard.getNumber("Hanging Motor Current Limit", hangMotorLimit);	//get hang motor current limit from SDB
 	
 		if (pdPanel.getCurrent(5) > hangMotorLimit)	//if the current for the hanging motor is above the threshold
+		{
+			hangStopTime = teleopTimer.get(); //set overcurrent time 
+		}
+		
+		if (hangStopTime + 1 > teleopTimer.get()) //if overcurrent tripped within last 1 second
 		{
 			hangingWinch.set(0.0); //set motor current to 0
 		}
