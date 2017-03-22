@@ -415,9 +415,9 @@ public class Robot extends IterativeRobot
 		final double targetDistanceTwo = 69; //was 74, then 72. SUBTRACTED 3 inches to account for new mechanism
 		double targetDistance2; //variable used to figure out distance of straight line drive to peg
 		final double targetDistanceShoot1 = -12; //how much to drive away BACKWARDS before spinning for shoot routine
-		final double targetAngleShootRight = -180; //how much to turn after backing away from peg
-		final double targetAngleShootLeft = 180;
-		final double targetDistanceShoot2 = 48; //how much further to drive before shooting
+		final double targetAngleShootRight = -155; //how much to turn after backing away from peg
+		final double targetAngleShootLeft = 155;
+		final double targetDistanceShoot2 = 63; //how much further to drive before shooting
 		double averageDistance; //calculated distance based on encoder readout
 		
 		//the side autos drive forward for a slightly shorter distance
@@ -834,7 +834,7 @@ public class Robot extends IterativeRobot
 	public double rateLimiter(double currentInput) {
 		double speedRate;
 		double currentTime = teleopTimer.get();
-		double rateLimit = 2.0;
+		double rateLimit = 0.5;
 
 		rateLimit = SmartDashboard.getNumber("Acceleration Limit", rateLimit);	//update rateLimit from SDB
 		
