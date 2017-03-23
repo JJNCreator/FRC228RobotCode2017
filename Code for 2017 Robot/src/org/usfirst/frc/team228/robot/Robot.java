@@ -31,7 +31,7 @@ public class Robot extends IterativeRobot
 	//PRE INIT - Create variables
 	
 	//ATTENTION!
-	final boolean isPracticeRobot = false;
+	final boolean isPracticeRobot = true;
 	
 	Preferences robotPrefs;
 
@@ -117,7 +117,7 @@ public class Robot extends IterativeRobot
 	double ShooterTarget, ShooterF, ShooterP, ShooterI, ShooterD;	//target value for shooter speed, and constants for FPID
 	int ShooterIZone;
 	Timer errorTimer;	//timer for how long error is below threshold
-	double shooterErrorThreshold = 20.0;	//shooter speed error; feeder runs when under error for set time
+	double shooterErrorThreshold;	//shooter speed error; feeder runs when under error for set time
 	//double shooterErrorThreshold; //check robotinit for value
 	double shooterTimeDelay;	//the amount of time the shooter speed must be within the error threshold to be considered stable
 								//check robotinit for value
@@ -409,7 +409,7 @@ public class Robot extends IterativeRobot
 	public void gearAuto(String sideOfField, boolean shootBalls)
 	{
 		final double gyroP = -0.195; //proportional gain constant for gyro, will need tuning
-		final double targetDistance1 = 69; //distance for side autons to drive before turning
+		final double targetDistance1 = 70.5; //distance for side autons to drive before turning //was 69
 		final double targetAngleRight = -60; //turn angle for right hand auto
 		final double targetAngleLeft = 60; //turn angle for left hand auto, should be inverse of right
 		final double targetDistanceTwo = 69; //was 74, then 72. SUBTRACTED 3 inches to account for new mechanism
@@ -417,7 +417,7 @@ public class Robot extends IterativeRobot
 		final double targetDistanceShoot1 = -12; //how much to drive away BACKWARDS before spinning for shoot routine
 		final double targetAngleShootRight = -155; //how much to turn after backing away from peg
 		final double targetAngleShootLeft = 155;
-		final double targetDistanceShoot2 = 63; //how much further to drive before shooting
+		final double targetDistanceShoot2 = 70; //how much further to drive before shooting
 		double averageDistance; //calculated distance based on encoder readout
 		
 		//the side autos drive forward for a slightly shorter distance
@@ -577,11 +577,11 @@ public class Robot extends IterativeRobot
 			//encoders should have been reset
 			if (averageDistance > targetDistanceShoot1) //logic is backward due to moving backward
 			{
-				drivetrain.arcadeDrive(0.7, robotGyro.getAngle() * gyroP);
+				drivetrain.arcadeDrive(0.85, robotGyro.getAngle() * gyroP);
 			}
 			else if (averageDistance < targetDistanceShoot1 - 4)
 			{
-				drivetrain.arcadeDrive(-0.7, robotGyro.getAngle() * gyroP);
+				drivetrain.arcadeDrive(-0.85, robotGyro.getAngle() * gyroP);
 			}
 			else
 			{
@@ -635,13 +635,14 @@ public class Robot extends IterativeRobot
 			}
 			break;
 		case 22: //drive gear side forward into goal wall
+			shooterControl(true, true);
 			if (averageDistance < targetDistanceShoot2)
 			{
-				drivetrain.arcadeDrive(-0.7, robotGyro.getAngle() * gyroP);
+				drivetrain.arcadeDrive(-0.85, robotGyro.getAngle() * gyroP);
 			}
 			else if (averageDistance > targetDistanceShoot2 + 4)
 			{
-				drivetrain.arcadeDrive(0.7, robotGyro.getAngle() * gyroP);
+				drivetrain.arcadeDrive(0.85, robotGyro.getAngle() * gyroP);
 			}
 			else
 			{
@@ -650,10 +651,10 @@ public class Robot extends IterativeRobot
 			}
 			break;
 		case 23: //shoot em up
-			if (autoTimer.get() < reachedTargetTime + 7) //if it hasn't been 7 seconds since gear was scored, this is arbitrary
+			if (autoTimer.get() < reachedTargetTime + 16) //if it hasn't been 7 seconds since gear was scored, this is arbitrary
 			{
-				shooterControl(true, true); // turn shooter on (hopefully) with PID settings
-				intakeAndFeedBalls(0, 1); //feed shooter once error threshold met
+				//shooterControl(true, true); // turn shooter on (hopefully) with PID settings
+				intakeAndFeedBalls(0, -1); //feed shooter once error threshold met
 			}
 			else
 			{
@@ -662,6 +663,7 @@ public class Robot extends IterativeRobot
 				intakeAndFeedBalls(0, 0); //stop trying to feed balls
 				gearAutonCase = 50;
 			}
+		break;
 		case 50: //stop moving
 		default:
 			drivetrain.arcadeDrive(0, 0);
